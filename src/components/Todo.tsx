@@ -1,4 +1,4 @@
-import { ChangeEvent, FormEvent, useState } from 'react';
+import { ChangeEvent, DragEvent, FormEvent, useRef, useState } from 'react';
 import styled from 'styled-components';
 import deleteIcon from 'assets/images/icon-cross.svg';
 import checkIcon from 'assets/images/icon-check.svg';
@@ -59,7 +59,7 @@ const TodoBody = styled.div`
   box-shadow: 0px 30px 80px 5px rgba(0, 0, 0, 0.1);
 `;
 
-const TodoElement = styled.div`
+const TodoItem = styled.div`
   display: flex;
   align-items: center;
   padding: 0.9rem 1.4rem;
@@ -133,6 +133,8 @@ export default function Todo() {
     'Bathing my cat',
     'Make too-long to-do lists appear ellipsed like this "blablablablablalablal"',
   ]);
+  const dragItem = useRef(-1);
+  const dragEnterItem = useRef(-1);
 
   const submitHandler = (e: FormEvent) => {
     e.preventDefault();
@@ -148,19 +150,37 @@ export default function Todo() {
           type="text"
           placeholder="Create a new todo"
           value={inputValue}
-          onChange={onChangeHandler}
-        ></Input>
+          onChange={onChangeHandler}></Input>
         <SubmitButton disabled={inputValue === ''}>→</SubmitButton>
       </Form>
       <TodoBody>
         {todo.map((el, idx) => (
-          <TodoElement draggable key={idx}>
+          <TodoItem
+            draggable
+            key={idx}
+            onDragStart={(e: DragEvent) => {
+              dragItem.current = idx;
+            }}
+            onDragEnter={(e: DragEvent) => {
+              dragEnterItem.current = idx;
+            }}
+            onDragOver={(e: DragEvent) => {
+              e.preventDefault();
+            }}
+            onDrop={(e: DragEvent) => {
+              const newTodo = [...todo];
+              const draggedItem = newTodo[dragItem.current];
+              newTodo.splice(dragItem.current, 1); // draggedItem을 제거함
+              newTodo.splice(dragEnterItem.current, 0, draggedItem);
+              [dragEnterItem.current, dragItem.current] = [-1, -1]; // reset
+              setTodo(newTodo);
+            }}>
             <CheckButton></CheckButton>
             <p>{el}</p>
             <DeleteButton>
               <img src={deleteIcon}></img>
             </DeleteButton>
-          </TodoElement>
+          </TodoItem>
         ))}
         <TodoStatus>
           <p>{todo.length} items left</p>
