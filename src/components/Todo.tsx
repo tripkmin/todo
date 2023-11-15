@@ -67,6 +67,25 @@ const TodoItem = styled.div`
   border-bottom: 1px solid #ddd;
   gap: 1rem;
 
+  &.dragged {
+    background-color: #eeeeee;
+  }
+
+  &.dragover {
+    border-bottom: 2px solid #8a3dd4;
+    position: relative;
+
+    &:before {
+      content: '';
+      position: absolute;
+      left: -3px;
+      bottom: -4px;
+      padding: 2px;
+      border-radius: 50%;
+      border: 2px solid #8a3dd4;
+      background-color: white;
+    }
+  }
   p {
     flex-grow: 1;
     overflow: hidden;
@@ -145,6 +164,8 @@ export default function Todo() {
     status: boolean;
     inputValue: string;
   }>({ id: null, status: false, inputValue: '' });
+  const [draggedId, setDraggedId] = useState('');
+  const [dragoverId, setDragoverId] = useState('');
 
   const submitHandler = (e: FormEvent) => {
     e.preventDefault();
@@ -175,19 +196,23 @@ export default function Todo() {
           <TodoItem
             draggable
             key={todoItem.id}
-            onClick={() => {
-              setEdit(prev => ({
-                inputValue: todoItem.content,
-                id: todoItem.id,
-                status: !prev.status,
-              }));
-            }}
+            className={
+              todoItem.id === draggedId && todoItem.id === dragoverId
+                ? 'dragged dragover'
+                : todoItem.id === draggedId
+                ? 'dragged'
+                : todoItem.id === dragoverId
+                ? 'dragover'
+                : ''
+            }
             onDragStart={(e: DragEvent) => {
               setEdit({ id: null, status: false, inputValue: '' }); // 만약 editing하고 있었다면 editing을 종료시킴
               dragItem.current = todoItem.id;
+              setDraggedId(todoItem.id);
             }}
             onDragEnter={(e: DragEvent) => {
               dragEnterItem.current = todoItem.id;
+              setDragoverId(todoItem.id);
             }}
             onDragOver={(e: DragEvent) => {
               e.preventDefault();
@@ -209,6 +234,8 @@ export default function Todo() {
                 [dragEnterItem.current, dragItem.current] = ['', '']; // reset
                 setTodoList(newTodo);
               }
+              setDraggedId('');
+              setDragoverId('');
             }}>
             {edit.id === todoItem.id ? (
               <>
@@ -248,7 +275,16 @@ export default function Todo() {
             ) : (
               <>
                 <CheckButton />
-                <p>{todoItem.content}</p>
+                <p
+                  onClick={() => {
+                    setEdit(prev => ({
+                      inputValue: todoItem.content,
+                      id: todoItem.id,
+                      status: !prev.status,
+                    }));
+                  }}>
+                  {todoItem.content}
+                </p>
                 <DeleteButton>
                   <img src={deleteIcon}></img>
                 </DeleteButton>
