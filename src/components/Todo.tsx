@@ -139,6 +139,7 @@ export default function Todo() {
 
   const submitHandler = (e: FormEvent) => {
     e.preventDefault();
+    setTodo(prev => [...prev, inputValue]);
   };
 
   const onChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
