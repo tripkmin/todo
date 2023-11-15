@@ -12,7 +12,7 @@ const GlobalStyles = createGlobalStyle`
       font-family: 'suit', sans-serif;
     }
     html, body, div, span, h1, h2, h3, h4, h5, h6, p, 
-    a, dl, dt, dd, ol, ul, li, form, label, table, textarea{
+    a, dl, dt, dd, ol, ul, li, form, label, table, input, textarea{
       margin: 0;
       padding: 0;
       border: 0;
@@ -22,6 +22,8 @@ const GlobalStyles = createGlobalStyle`
     }
     body{
       min-height: 100vh;
+      display: flex;
+      justify-content: center;
     }
     ol, ul{
       list-style: none;
@@ -75,6 +77,10 @@ const GlobalStyles = createGlobalStyle`
     input&:focus,
     textarea&:focus{
       outline: none;
+    }
+
+    #root {
+      min-height: 100vh;
     }
 `;
 
