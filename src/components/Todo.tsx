@@ -31,19 +31,38 @@ const DeleteButton = styled.button`
 `;
 
 // Issue: transition not applied to gradient property of background.
-const SubmitButton = styled.button`
+const SubmitButton = styled.button<{ disabled: boolean }>`
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 4px 6px;
-  color: white;
+  color: #aaa;
   border-radius: 5px;
-  border: 1px solid #eee;
-  background: linear-gradient(155deg, #edcb6c 0%, #ec79bc 100%);
+  /* border: 1px solid #eee; */
+  background: #eee;
+  position: relative;
+
+  &:after {
+    position: absolute;
+    // relative 요소의 안쪽 요소에서 시작하기 때문에 border 1px만큼 보정한 값(-1px)을 넣음
+    top: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    content: '→';
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    border-radius: 5px;
+    border: 1px solid #fff;
+    background: linear-gradient(155deg, #edcb6c 0%, #ec79bc 100%);
+    opacity: ${props => (props.disabled ? 0 : 1)};
+    transition: opacity ${timer.fast};
+  }
 
   &:disabled {
-    color: #aaa;
-    background: #eee;
+    cursor: not-allowed;
   }
 `;
 
@@ -157,6 +176,7 @@ export default function Todo() {
         'Make too-long to-do lists appear ellipsed like this "blablablablablalablal"',
     },
   ]);
+  const inputRef = useRef<HTMLInputElement>(null);
   const dragItem = useRef('');
   const dragEnterItem = useRef('');
   const [edit, setEdit] = useState<{
@@ -170,6 +190,10 @@ export default function Todo() {
   const submitHandler = (e: FormEvent) => {
     e.preventDefault();
     setTodoList(prev => [...prev, { id: uuid(), content: inputValue }]);
+    setInputValue('');
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
   };
 
   const onChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
@@ -185,6 +209,7 @@ export default function Todo() {
     <>
       <Form onSubmit={submitHandler}>
         <Input
+          ref={inputRef}
           type="text"
           placeholder="Create a new todo"
           value={inputValue}
