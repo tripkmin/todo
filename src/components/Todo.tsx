@@ -1,4 +1,4 @@
-import { ChangeEvent, DragEvent, FormEvent, useRef, useState } from 'react';
+import { ChangeEvent, DragEvent, FormEvent, MouseEvent, useRef, useState } from 'react';
 import styled from 'styled-components';
 import deleteIcon from 'assets/images/icon-cross.svg';
 import checkIcon from 'assets/images/icon-check.svg';
@@ -135,6 +135,7 @@ export default function Todo() {
   ]);
   const dragItem = useRef(-1);
   const dragEnterItem = useRef(-1);
+  const [edit, setEdit] = useState({ id: -1, status: false, inputValue: '' });
 
   const submitHandler = (e: FormEvent) => {
     e.preventDefault();
@@ -158,7 +159,15 @@ export default function Todo() {
           <TodoItem
             draggable
             key={idx}
+            onClick={() => {
+              setEdit(prev => ({
+                inputValue: el,
+                id: idx,
+                status: !prev.status,
+              }));
+            }}
             onDragStart={(e: DragEvent) => {
+              setEdit({ id: -1, status: false, inputValue: '' }); // 만약 editing하고 있었다면 editing을 종료시킴
               dragItem.current = idx;
             }}
             onDragEnter={(e: DragEvent) => {
@@ -175,11 +184,45 @@ export default function Todo() {
               [dragEnterItem.current, dragItem.current] = [-1, -1]; // reset
               setTodo(newTodo);
             }}>
-            <CheckButton></CheckButton>
-            <p>{el}</p>
-            <DeleteButton>
-              <img src={deleteIcon}></img>
-            </DeleteButton>
+            {edit.id === idx ? (
+              <>
+                <Input
+                  type="text"
+                  defaultValue={edit.inputValue}
+                  onChange={e =>
+                    setEdit(prev => ({
+                      ...prev,
+                      inputValue: e.target.value,
+                    }))
+                  }
+                />
+                <button
+                  onClick={(e: MouseEvent) => {
+                    e.stopPropagation();
+                    setEdit({ id: -1, status: false, inputValue: '' });
+                  }}>
+                  cancel
+                </button>
+                <button
+                  onClick={(e: MouseEvent) => {
+                    e.stopPropagation();
+                    const newTodo = [...todo];
+                    newTodo[edit.id] = edit.inputValue;
+                    setTodo(newTodo);
+                    setEdit({ id: -1, status: false, inputValue: '' });
+                  }}>
+                  submit
+                </button>
+              </>
+            ) : (
+              <>
+                <CheckButton />
+                <p>{el}</p>
+                <DeleteButton>
+                  <img src={deleteIcon}></img>
+                </DeleteButton>
+              </>
+            )}
           </TodoItem>
         ))}
         <TodoStatus>
