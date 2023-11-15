@@ -5,6 +5,6 @@ export const timer = {
 };
 
 export const size = {
-  mobile: '768px',
+  mobile: '600px',
   desktop: '1024px',
 };
