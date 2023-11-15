@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import deleteIcon from 'assets/images/icon-cross.svg';
 import checkIcon from 'assets/images/icon-check.svg';
 import { size, timer } from 'styles/constants';
+import uuid from 'react-uuid';
 
 const Form = styled.form`
   display: flex;
@@ -125,26 +126,40 @@ const TodoFooter = styled.div`
 
 export default function Todo() {
   const [inputValue, setInputValue] = useState('');
-  const [todo, setTodo] = useState([
-    'Complete online Assembly language course',
-    'fail at dieting',
-    `Clean an air fryer that hasn't been cleaned in a month`,
-    'Catch up on homework',
-    'Bathing my cat',
-    'Make too-long to-do lists appear ellipsed like this "blablablablablalablal"',
+  const [todoList, setTodoList] = useState<TodoT[]>([
+    { id: uuid(), content: 'Complete online Assembly language course' },
+    { id: uuid(), content: 'fail at dieting' },
+    { id: uuid(), content: `Clean an air fryer that hasn't been cleaned in a month` },
+    { id: uuid(), content: 'Catch up on homework' },
+    { id: uuid(), content: 'Bathing my cat' },
+    {
+      id: uuid(),
+      content:
+        'Make too-long to-do lists appear ellipsed like this "blablablablablalablal"',
+    },
   ]);
-  const dragItem = useRef(-1);
-  const dragEnterItem = useRef(-1);
-  const [edit, setEdit] = useState({ id: -1, status: false, inputValue: '' });
+  const dragItem = useRef('');
+  const dragEnterItem = useRef('');
+  const [edit, setEdit] = useState<{
+    id: null | string;
+    status: boolean;
+    inputValue: string;
+  }>({ id: null, status: false, inputValue: '' });
 
   const submitHandler = (e: FormEvent) => {
     e.preventDefault();
-    setTodo(prev => [...prev, inputValue]);
+    setTodoList(prev => [...prev, { id: uuid(), content: inputValue }]);
   };
 
   const onChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
   };
+
+  interface TodoT {
+    id: string;
+    content: string;
+  }
+
   return (
     <>
       <Form onSubmit={submitHandler}>
@@ -156,36 +171,46 @@ export default function Todo() {
         <SubmitButton disabled={inputValue === ''}>→</SubmitButton>
       </Form>
       <TodoBody>
-        {todo.map((el, idx) => (
+        {todoList.map(todoItem => (
           <TodoItem
             draggable
-            key={idx}
+            key={todoItem.id}
             onClick={() => {
               setEdit(prev => ({
-                inputValue: el,
-                id: idx,
+                inputValue: todoItem.content,
+                id: todoItem.id,
                 status: !prev.status,
               }));
             }}
             onDragStart={(e: DragEvent) => {
-              setEdit({ id: -1, status: false, inputValue: '' }); // 만약 editing하고 있었다면 editing을 종료시킴
-              dragItem.current = idx;
+              setEdit({ id: null, status: false, inputValue: '' }); // 만약 editing하고 있었다면 editing을 종료시킴
+              dragItem.current = todoItem.id;
             }}
             onDragEnter={(e: DragEvent) => {
-              dragEnterItem.current = idx;
+              dragEnterItem.current = todoItem.id;
             }}
             onDragOver={(e: DragEvent) => {
               e.preventDefault();
             }}
             onDrop={(e: DragEvent) => {
-              const newTodo = [...todo];
-              const draggedItem = newTodo[dragItem.current];
-              newTodo.splice(dragItem.current, 1); // draggedItem을 제거함
-              newTodo.splice(dragEnterItem.current, 0, draggedItem);
-              [dragEnterItem.current, dragItem.current] = [-1, -1]; // reset
-              setTodo(newTodo);
+              const newTodo = [...todoList];
+              const draggedItem = newTodo.find(
+                todoItem => todoItem.id === dragItem.current
+              );
+              const draggedItemIndex = newTodo.findIndex(
+                todo => todo.id === dragItem.current
+              );
+              const dropItemIndex = newTodo.findIndex(
+                todo => todo.id === dragEnterItem.current
+              );
+              if (draggedItem) {
+                newTodo.splice(draggedItemIndex, 1); // draggedItem을 제거함
+                newTodo.splice(dropItemIndex, 0, draggedItem);
+                [dragEnterItem.current, dragItem.current] = ['', '']; // reset
+                setTodoList(newTodo);
+              }
             }}>
-            {edit.id === idx ? (
+            {edit.id === todoItem.id ? (
               <>
                 <Input
                   type="text"
@@ -200,17 +225,22 @@ export default function Todo() {
                 <button
                   onClick={(e: MouseEvent) => {
                     e.stopPropagation();
-                    setEdit({ id: -1, status: false, inputValue: '' });
+                    setEdit({ id: '', status: false, inputValue: '' });
                   }}>
                   cancel
                 </button>
                 <button
                   onClick={(e: MouseEvent) => {
                     e.stopPropagation();
-                    const newTodo = [...todo];
-                    newTodo[edit.id] = edit.inputValue;
-                    setTodo(newTodo);
-                    setEdit({ id: -1, status: false, inputValue: '' });
+                    const newTodo = todoList.map(todoItem => {
+                      if (todoItem.id === edit.id) {
+                        return { ...todoItem, content: edit.inputValue };
+                      } else {
+                        return { ...todoItem };
+                      }
+                    });
+                    setTodoList(newTodo);
+                    setEdit({ id: '', status: false, inputValue: '' });
                   }}>
                   submit
                 </button>
@@ -218,7 +248,7 @@ export default function Todo() {
             ) : (
               <>
                 <CheckButton />
-                <p>{el}</p>
+                <p>{todoItem.content}</p>
                 <DeleteButton>
                   <img src={deleteIcon}></img>
                 </DeleteButton>
@@ -227,7 +257,7 @@ export default function Todo() {
           </TodoItem>
         ))}
         <TodoStatus>
-          <p>{todo.length} items left</p>
+          <p>{todoList.length} items left</p>
           <TodoOption>
             <button>All</button>
             <button>Active</button>
