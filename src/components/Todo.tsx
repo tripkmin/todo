@@ -12,14 +12,32 @@ const Form = styled.form`
   padding: 1rem 1.4rem;
   border-radius: 0.5rem;
 `;
-const CheckButton = styled.button`
+const CheckButton = styled.button<{ $completed: boolean }>`
   padding: 10px;
   border-radius: 50%;
-  background: linear-gradient(
-    155deg,
-    rgba(108, 185, 237, 1) 0%,
-    rgba(169, 121, 236, 1) 100%
-  );
+  border: 1px solid #bbb;
+  background: white;
+  position: relative;
+
+  &::after {
+    position: absolute;
+    content: '→';
+    transform: rotate(90deg);
+    color: white;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-radius: 50%;
+    background-image: url(${checkIcon});
+    background: linear-gradient(
+      155deg,
+      rgba(108, 185, 237, 1) 0%,
+      rgba(169, 121, 236, 1) 100%
+    );
+    opacity: ${props => (props.$completed ? 1 : 0)};
+    transition: opacity ${timer.fast};
+  }
 `;
 
 const DeleteButton = styled.button`
@@ -48,7 +66,6 @@ const SubmitButton = styled.button<{ disabled: boolean }>`
 
   &:after {
     position: absolute;
-    // relative 요소의 안쪽 요소에서 시작하기 때문에 border 1px만큼 보정한 값(-1px)을 넣음
     top: 0px;
     bottom: 0px;
     left: 0px;
@@ -102,7 +119,7 @@ const TodoItem = styled.div`
       content: '';
       position: absolute;
       left: -3px;
-      bottom: -4px;
+      bottom: -5px;
       padding: 2px;
       border-radius: 50%;
       border: 2px solid #8a3dd4;
@@ -182,13 +199,18 @@ const TodoFooter = styled.div`
 export default function Todo() {
   const [inputValue, setInputValue] = useState('');
   const [todoList, setTodoList] = useState<TodoT[]>([
-    { id: uuid(), content: 'Complete online Assembly language course' },
-    { id: uuid(), content: 'fail at dieting' },
-    { id: uuid(), content: `Clean an air fryer that hasn't been cleaned in a month` },
-    { id: uuid(), content: 'Catch up on homework' },
-    { id: uuid(), content: 'Bathing my cat' },
+    { id: uuid(), completed: false, content: 'Complete online Assembly language course' },
+    { id: uuid(), completed: false, content: 'fail at dieting' },
     {
       id: uuid(),
+      completed: false,
+      content: `Clean an air fryer that hasn't been cleaned in a month`,
+    },
+    { id: uuid(), completed: false, content: 'Catch up on homework' },
+    { id: uuid(), completed: false, content: 'Bathing my cat' },
+    {
+      id: uuid(),
+      completed: false,
       content:
         'Make too-long to-do lists appear ellipsed like this "blablablablablalablal"',
     },
@@ -206,7 +228,7 @@ export default function Todo() {
 
   const submitHandler = (e: FormEvent) => {
     e.preventDefault();
-    setTodoList(prev => [...prev, { id: uuid(), content: inputValue }]);
+    setTodoList(prev => [...prev, { id: uuid(), content: inputValue, completed: false }]);
     setInputValue('');
     if (inputRef.current) {
       inputRef.current.focus();
@@ -220,6 +242,7 @@ export default function Todo() {
   interface TodoT {
     id: string;
     content: string;
+    completed: boolean;
   }
 
   return (
@@ -321,7 +344,21 @@ export default function Todo() {
                 </>
               ) : (
                 <>
-                  <CheckButton />
+                  <CheckButton
+                    $completed={todoItem.completed}
+                    onClick={() => {
+                      setTodoList(prev => {
+                        return prev.map(_t => {
+                          if (_t.id === todoItem.id) {
+                            return { ..._t, completed: !_t.completed };
+                          } else {
+                            return { ..._t };
+                          }
+                        });
+                      });
+                    }}>
+                    {/* <img src={checkIcon} width={10} height=></img> */}
+                  </CheckButton>
                   <p
                     onClick={() => {
                       setEdit(prev => ({
