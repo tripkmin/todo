@@ -28,6 +28,10 @@ const DeleteButton = styled.button`
   align-items: center;
   opacity: 0;
   transition: opacity ${timer.fast};
+
+  &:focus {
+    opacity: 1;
+  }
 `;
 
 // Issue: transition not applied to gradient property of background.
@@ -123,6 +127,19 @@ const TodoItem = styled.div`
   }
 `;
 
+const TodoNothing = styled(TodoItem)`
+  /*
+  p의 폰트 사이즈가 줄어든 만큼 y축 패딩값을 1.05rem으로 늘려
+  TodoItem과의 크기 차이가 나지 않도록 보정함
+  */
+  padding: 1.05rem 1.4rem;
+  p {
+    font-size: 0.8rem;
+    color: #aaa;
+    text-align: center;
+  }
+`;
+
 const TodoStatus = styled.div`
   display: flex;
   justify-content: space-between;
@@ -214,109 +231,120 @@ export default function Todo() {
           placeholder="Create a new todo"
           value={inputValue}
           onChange={onChangeHandler}></Input>
-        <SubmitButton disabled={inputValue === ''}>→</SubmitButton>
+        <SubmitButton disabled={inputValue.trim() === ''}>→</SubmitButton>
       </Form>
       <TodoBody>
-        {todoList.map(todoItem => (
-          <TodoItem
-            draggable
-            key={todoItem.id}
-            className={
-              todoItem.id === draggedId && todoItem.id === dragoverId
-                ? 'dragged dragover'
-                : todoItem.id === draggedId
-                ? 'dragged'
-                : todoItem.id === dragoverId
-                ? 'dragover'
-                : ''
-            }
-            onDragStart={(e: DragEvent) => {
-              setEdit({ id: null, status: false, inputValue: '' }); // 만약 editing하고 있었다면 editing을 종료시킴
-              dragItem.current = todoItem.id;
-              setDraggedId(todoItem.id);
-            }}
-            onDragEnter={(e: DragEvent) => {
-              dragEnterItem.current = todoItem.id;
-              setDragoverId(todoItem.id);
-            }}
-            onDragOver={(e: DragEvent) => {
-              e.preventDefault();
-            }}
-            onDragEnd={() => {
-              const newTodo = [...todoList];
-              const draggedItem = newTodo.find(
-                todoItem => todoItem.id === dragItem.current
-              );
-              const draggedItemIndex = newTodo.findIndex(
-                todo => todo.id === dragItem.current
-              );
-              const dropItemIndex = newTodo.findIndex(
-                todo => todo.id === dragEnterItem.current
-              );
-              if (draggedItem) {
-                newTodo.splice(draggedItemIndex, 1); // draggedItem을 제거함
-                newTodo.splice(dropItemIndex, 0, draggedItem);
-                [dragEnterItem.current, dragItem.current] = ['', '']; // reset
-                setTodoList(newTodo);
+        {todoList.length === 0 ? (
+          <TodoNothing>
+            <p>No to-dos here! Time for a break, maybe?</p>
+          </TodoNothing>
+        ) : (
+          todoList.map(todoItem => (
+            <TodoItem
+              draggable
+              key={todoItem.id}
+              className={
+                todoItem.id === draggedId && todoItem.id === dragoverId
+                  ? 'dragged dragover'
+                  : todoItem.id === draggedId
+                  ? 'dragged'
+                  : todoItem.id === dragoverId
+                  ? 'dragover'
+                  : ''
               }
-              setDraggedId('');
-              setDragoverId('');
-            }}>
-            {edit.id === todoItem.id ? (
-              <>
-                <Input
-                  type="text"
-                  defaultValue={edit.inputValue}
-                  onChange={e =>
-                    setEdit(prev => ({
-                      ...prev,
-                      inputValue: e.target.value,
-                    }))
-                  }
-                />
-                <button
-                  onClick={(e: MouseEvent) => {
-                    e.stopPropagation();
-                    setEdit({ id: '', status: false, inputValue: '' });
-                  }}>
-                  cancel
-                </button>
-                <button
-                  onClick={(e: MouseEvent) => {
-                    e.stopPropagation();
-                    const newTodo = todoList.map(todoItem => {
-                      if (todoItem.id === edit.id) {
-                        return { ...todoItem, content: edit.inputValue };
-                      } else {
-                        return { ...todoItem };
-                      }
-                    });
-                    setTodoList(newTodo);
-                    setEdit({ id: '', status: false, inputValue: '' });
-                  }}>
-                  submit
-                </button>
-              </>
-            ) : (
-              <>
-                <CheckButton />
-                <p
-                  onClick={() => {
-                    setEdit(prev => ({
-                      inputValue: todoItem.content,
-                      id: todoItem.id,
-                      status: !prev.status,
-                    }));
-                  }}>
-                  {todoItem.content}
-                </p>
-                <DeleteButton>
-                  <img src={deleteIcon}></img>
-                </DeleteButton>
-              </>
-            )}
-          </TodoItem>
-        ))}
+              onDragStart={(e: DragEvent) => {
+                setEdit({ id: null, status: false, inputValue: '' }); // 만약 editing하고 있었다면 editing을 종료시킴
+                dragItem.current = todoItem.id;
+                setDraggedId(todoItem.id);
+              }}
+              onDragEnter={(e: DragEvent) => {
+                dragEnterItem.current = todoItem.id;
+                setDragoverId(todoItem.id);
+              }}
+              onDragOver={(e: DragEvent) => {
+                e.preventDefault();
+              }}
+              onDragEnd={() => {
+                const newTodo = [...todoList];
+                const draggedItem = newTodo.find(
+                  todoItem => todoItem.id === dragItem.current
+                );
+                const draggedItemIndex = newTodo.findIndex(
+                  todo => todo.id === dragItem.current
+                );
+                const dropItemIndex = newTodo.findIndex(
+                  todo => todo.id === dragEnterItem.current
+                );
+                if (draggedItem) {
+                  newTodo.splice(draggedItemIndex, 1); // draggedItem을 제거함
+                  newTodo.splice(dropItemIndex, 0, draggedItem);
+                  [dragEnterItem.current, dragItem.current] = ['', '']; // reset
+                  setTodoList(newTodo);
+                }
+                setDraggedId('');
+                setDragoverId('');
+              }}>
+              {edit.id === todoItem.id ? (
+                <>
+                  <Input
+                    type="text"
+                    defaultValue={edit.inputValue}
+                    onChange={e =>
+                      setEdit(prev => ({
+                        ...prev,
+                        inputValue: e.target.value,
+                      }))
+                    }
+                  />
+                  <button
+                    onClick={(e: MouseEvent) => {
+                      e.stopPropagation();
+                      setEdit({ id: '', status: false, inputValue: '' });
+                    }}>
+                    cancel
+                  </button>
+                  <button
+                    onClick={(e: MouseEvent) => {
+                      e.stopPropagation();
+                      const newTodo = todoList.map(todoItem => {
+                        if (todoItem.id === edit.id) {
+                          return { ...todoItem, content: edit.inputValue };
+                        } else {
+                          return { ...todoItem };
+                        }
+                      });
+                      setTodoList(newTodo);
+                      setEdit({ id: '', status: false, inputValue: '' });
+                    }}>
+                    submit
+                  </button>
+                </>
+              ) : (
+                <>
+                  <CheckButton />
+                  <p
+                    onClick={() => {
+                      setEdit(prev => ({
+                        inputValue: todoItem.content,
+                        id: todoItem.id,
+                        status: !prev.status,
+                      }));
+                    }}>
+                    {todoItem.content}
+                  </p>
+                  <DeleteButton
+                    onClick={() => {
+                      setTodoList(prev => {
+                        return prev.filter(_t => _t.id !== todoItem.id);
+                      });
+                    }}>
+                    <img src={deleteIcon}></img>
+                  </DeleteButton>
+                </>
+              )}
+            </TodoItem>
+          ))
+        )}
         <TodoStatus>
           <p>{todoList.length} items left</p>
           <TodoOption>
