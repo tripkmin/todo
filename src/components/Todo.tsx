@@ -242,7 +242,7 @@ export default function Todo() {
             onDragOver={(e: DragEvent) => {
               e.preventDefault();
             }}
-            onDrop={(e: DragEvent) => {
+            onDragEnd={() => {
               const newTodo = [...todoList];
               const draggedItem = newTodo.find(
                 todoItem => todoItem.id === dragItem.current
