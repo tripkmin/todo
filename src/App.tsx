@@ -1,15 +1,18 @@
 import styled, { ThemeProvider } from 'styled-components';
 import GlobalStyles from 'styles/GlobalStyles';
 import lightBg from 'assets/images/bg-desktop-light.jpg';
-import { size } from 'styles/constants';
+import darkBg from 'assets/images/bg-desktop-dark.jpg';
+import { size, themeMode } from 'styles/constants';
 import Header from 'layouts/Header';
 import Main from 'layouts/Main';
 import Footer from 'layouts/Footer';
 import Todo from 'components/Todo';
 import useTheme from 'hooks/useTheme';
+import { ThemeT } from 'types/types';
 
-const Background = styled.div`
-  background-image: url(${lightBg});
+const Background = styled.div<{ $theme: ThemeT }>`
+  background-image: ${props =>
+    props.$theme === 'light' ? `url(${lightBg})` : `url(${darkBg})`};
   width: 100vw;
   height: 300px;
   background-size: cover;
@@ -27,7 +30,7 @@ const TodoLayout = styled.section`
   gap: 3rem;
 
   @media screen and (max-width: ${size.mobile}) {
-    width: 100%;
+    max-width: 580px;
   }
 `;
 
@@ -35,11 +38,11 @@ export default function App() {
   const { theme, setTheme } = useTheme();
 
   return (
-    <ThemeProvider theme={{ color: 'red' }}>
+    <ThemeProvider theme={themeMode[theme]}>
       <GlobalStyles />
-      <Background />
+      <Background $theme={theme} />
       <TodoLayout>
-        <Header />
+        <Header theme={theme} setTheme={setTheme} />
         <Main>
           <Todo />
         </Main>

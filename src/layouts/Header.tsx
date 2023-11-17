@@ -1,6 +1,8 @@
 import lightIcon from 'assets/images/icon-sun.svg';
 import darkIcon from 'assets/images/icon-moon.svg';
 import styled from 'styled-components';
+import { ThemeT } from 'types/types';
+import { Dispatch, SetStateAction } from 'react';
 
 const HeaderBox = styled.header`
   display: flex;
@@ -14,13 +16,30 @@ const HeaderBox = styled.header`
   }
 `;
 
-export default function Header() {
+interface HeaderProps {
+  theme: ThemeT;
+  setTheme: Dispatch<SetStateAction<ThemeT>>;
+}
+
+export default function Header({ theme, setTheme }: HeaderProps) {
   return (
     <HeaderBox>
       <h1>TODO</h1>
-      <button>
-        <img src={lightIcon}></img>
-      </button>
+      {theme === 'light' ? (
+        <button
+          onClick={() => {
+            setTheme('dark');
+          }}>
+          <img src={darkIcon}></img>
+        </button>
+      ) : (
+        <button
+          onClick={() => {
+            setTheme('light');
+          }}>
+          <img src={lightIcon}></img>
+        </button>
+      )}
     </HeaderBox>
   );
 }

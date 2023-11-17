@@ -1,7 +1,6 @@
 import { ChangeEvent, DragEvent, FormEvent, MouseEvent, useRef, useState } from 'react';
 import styled from 'styled-components';
 import deleteIcon from 'assets/images/icon-cross.svg';
-import checkIcon from 'assets/images/icon-check.svg';
 import { size, timer } from 'styles/constants';
 import uuid from 'react-uuid';
 import { EditT } from 'types/types';
@@ -9,16 +8,18 @@ import { EditT } from 'types/types';
 const Form = styled.form`
   display: flex;
   gap: 1rem;
-  background-color: white;
+  background-color: ${props => props.theme.background.secondary};
   padding: 1rem 1.4rem;
   border-radius: 0.5rem;
+  transition: background-color ${timer.default};
 `;
 const CheckButton = styled.button<{ $completed: boolean }>`
   padding: 10px;
   border-radius: 50%;
-  border: 1px solid #bbb;
-  background: white;
+  border: 1px solid ${props => props.theme.border.primary};
+  background-color: ${props => props.theme.background.secondary};
   position: relative;
+  transition: border ${timer.default}, background-color ${timer.default};
 
   &::after {
     position: absolute;
@@ -30,7 +31,6 @@ const CheckButton = styled.button<{ $completed: boolean }>`
     left: 0;
     right: 0;
     border-radius: 50%;
-    background-image: url(${checkIcon});
     background: linear-gradient(
       155deg,
       rgba(108, 185, 237, 1) 0%,
@@ -42,9 +42,12 @@ const CheckButton = styled.button<{ $completed: boolean }>`
 `;
 
 const TodoItemContent = styled.p<{ $completed: boolean }>`
-  color: ${props => (props.$completed ? '#aaa' : '')};
+  color: ${props =>
+    props.$completed ? props.theme.font.disabled : props.theme.font.primary};
   text-decoration: ${props => (props.$completed ? 'line-through' : '')};
+  transition: color ${timer.default};
 `;
+
 const DeleteButton = styled.button`
   display: flex;
   justify-content: center;
@@ -55,6 +58,10 @@ const DeleteButton = styled.button`
   &:focus {
     opacity: 1;
   }
+
+  @media screen and (max-width: ${size.mobile}) {
+    opacity: 1;
+  }
 `;
 
 const SubmitButton = styled.button<{ disabled: boolean }>`
@@ -62,10 +69,11 @@ const SubmitButton = styled.button<{ disabled: boolean }>`
   justify-content: center;
   align-items: center;
   padding: 4px 6px;
-  color: #aaa;
+  color: ${props => props.theme.font.primary};
   border-radius: 5px;
-  background: #eee;
+  background: ${props => props.theme.background.light};
   position: relative;
+  transition: all ${timer.default};
 
   &:after {
     position: absolute;
@@ -79,7 +87,6 @@ const SubmitButton = styled.button<{ disabled: boolean }>`
     align-items: center;
     color: white;
     border-radius: 5px;
-    border: 1px solid #fff;
     background: linear-gradient(155deg, #edcb6c 0%, #ec79bc 100%);
     opacity: ${props => (props.disabled ? 0 : 1)};
     transition: opacity ${timer.fast};
@@ -91,15 +98,23 @@ const SubmitButton = styled.button<{ disabled: boolean }>`
 `;
 
 const Input = styled.input`
-  width: 100%;
+  background-color: ${props => props.theme.background.secondary};
+  color: ${props => props.theme.font.primary};
+  transition: all ${timer.default};
+  flex-grow: 1;
   border: 0;
+
+  &::placeholder {
+    color: ${props => props.theme.font.secondary};
+    transition: all ${timer.default};
+  }
 `;
 
 const TodoBody = styled.div`
   padding: 0.3rem 0;
   border-radius: 0.5rem;
-  background-color: white;
-  border: 1px solid #eee;
+  background-color: ${props => props.theme.background.secondary};
+  transition: background-color ${timer.default};
   box-shadow: 0px 30px 80px 5px rgba(0, 0, 0, 0.1);
 `;
 
@@ -107,11 +122,12 @@ const TodoItem = styled.div`
   display: flex;
   align-items: center;
   padding: 0.9rem 1.4rem;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid ${props => props.theme.border.secondary};
   gap: 1rem;
+  transition: border-bottom ${timer.default};
 
   &.dragged {
-    background-color: #dddddd;
+    background-color: ${props => props.theme.background.light};
   }
 
   &.dragover {
@@ -135,7 +151,8 @@ const TodoItem = styled.div`
       padding: 2px;
       border-radius: 50%;
       border: 2px solid #8a3dd4;
-      background-color: white;
+      background-color: ${props => props.theme.background.secondary};
+
       z-index: 1;
     }
   }
@@ -166,7 +183,8 @@ const TodoNothing = styled(TodoItem)`
   padding: 1.05rem 1.4rem;
   p {
     font-size: 0.8rem;
-    color: #aaa;
+    color: ${props => props.theme.font.secondary};
+    transition: color ${timer.default};
     text-align: center;
   }
 `;
@@ -179,10 +197,8 @@ const TodoStatus = styled.div<{ $currentFilter: string }>`
 
   p {
     font-size: 0.8rem;
-    color: #888;
-  }
-
-  button {
+    color: ${props => props.theme.font.secondary};
+    transition: color ${timer.default};
   }
 `;
 
@@ -192,22 +208,25 @@ const TodoOption = styled.div`
 `;
 
 const OptionButton = styled.button<{ $filter: string; value: string }>`
-  color: ${props => (props.$filter === props.value ? '#6f9ffb' : '#999999')};
+  color: ${props =>
+    props.$filter === props.value ? props.theme.font.active : props.theme.font.secondary};
   font-size: 0.9rem;
   font-weight: 700;
-  transition: all ${timer.default};
+  transition: color ${timer.default};
+
   &:hover {
-    color: ${props => (props.$filter === props.value ? '#6f9ffb' : '#000000')};
+    color: ${props =>
+      props.$filter === props.value ? props.theme.font.active : props.theme.font.hover};
   }
 `;
 
 const ClearButton = styled.button`
   color: #999999;
   font-size: 0.9rem;
-  transition: all ${timer.default};
+  transition: color ${timer.default};
 
   &:hover {
-    color: #000000;
+    color: ${props => props.theme.font.hover};
   }
 `;
 
@@ -218,8 +237,7 @@ const TodoFooter = styled.div`
     justify-content: space-evenly;
     padding: 1rem 3rem;
     border-radius: 0.5rem;
-    background-color: white;
-    border: 1px solid #eee;
+    background-color: ${props => props.theme.background.secondary};
     box-shadow: 0px 30px 80px 10px rgba(0, 0, 0, 0.1);
   }
 `;
@@ -291,7 +309,7 @@ export default function Todo() {
       case 'active':
         return todoList.filter(todoItem => !todoItem.completed);
       default:
-        return [...todoList].sort((a, b) => +a.completed - +b.completed);
+        return todoList;
     }
   };
 

@@ -1,5 +1,6 @@
 import { createGlobalStyle } from 'styled-components';
 import reset from 'styled-reset';
+import { timer } from './constants';
 
 const GlobalStyles = createGlobalStyle`
     ${reset}
@@ -24,6 +25,8 @@ const GlobalStyles = createGlobalStyle`
       min-height: 100vh;
       display: flex;
       justify-content: center;
+      background-color: ${props => props.theme.background.primary};
+      transition: background-color ${timer.default}
     }
     ol, ul{
       list-style: none;
