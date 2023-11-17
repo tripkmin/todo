@@ -4,6 +4,7 @@ import deleteIcon from 'assets/images/icon-cross.svg';
 import checkIcon from 'assets/images/icon-check.svg';
 import { size, timer } from 'styles/constants';
 import uuid from 'react-uuid';
+import { EditT } from 'types/types';
 
 const Form = styled.form`
   display: flex;
@@ -40,6 +41,10 @@ const CheckButton = styled.button<{ $completed: boolean }>`
   }
 `;
 
+const TodoItemContent = styled.p<{ $completed: boolean }>`
+  color: ${props => (props.$completed ? '#aaa' : '')};
+  text-decoration: ${props => (props.$completed ? 'line-through' : '')};
+`;
 const DeleteButton = styled.button`
   display: flex;
   justify-content: center;
@@ -52,7 +57,6 @@ const DeleteButton = styled.button`
   }
 `;
 
-// Issue: transition not applied to gradient property of background.
 const SubmitButton = styled.button<{ disabled: boolean }>`
   display: flex;
   justify-content: center;
@@ -60,7 +64,6 @@ const SubmitButton = styled.button<{ disabled: boolean }>`
   padding: 4px 6px;
   color: #aaa;
   border-radius: 5px;
-  /* border: 1px solid #eee; */
   background: #eee;
   position: relative;
 
@@ -108,22 +111,32 @@ const TodoItem = styled.div`
   gap: 1rem;
 
   &.dragged {
-    background-color: #eeeeee;
+    background-color: #dddddd;
   }
 
   &.dragover {
-    border-bottom: 2px solid #8a3dd4;
     position: relative;
+
+    &:after {
+      position: absolute;
+      content: '';
+      bottom: -1px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background-color: #8a3dd4;
+    }
 
     &:before {
       content: '';
       position: absolute;
       left: -3px;
-      bottom: -5px;
+      bottom: -4px;
       padding: 2px;
       border-radius: 50%;
       border: 2px solid #8a3dd4;
       background-color: white;
+      z-index: 1;
     }
   }
   p {
@@ -131,6 +144,7 @@ const TodoItem = styled.div`
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+    font-weight: 500;
   }
 
   button {
@@ -157,7 +171,7 @@ const TodoNothing = styled(TodoItem)`
   }
 `;
 
-const TodoStatus = styled.div`
+const TodoStatus = styled.div<{ $currentFilter: string }>`
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -169,18 +183,32 @@ const TodoStatus = styled.div`
   }
 
   button {
-    font-size: 0.9rem;
-    transition: all 0.2s;
-
-    &:hover {
-      font-weight: 900;
-    }
   }
 `;
 
 const TodoOption = styled.div`
   display: flex;
   gap: 1rem;
+`;
+
+const OptionButton = styled.button<{ $filter: string; value: string }>`
+  color: ${props => (props.$filter === props.value ? '#6f9ffb' : '#999999')};
+  font-size: 0.9rem;
+  font-weight: 700;
+  transition: all ${timer.default};
+  &:hover {
+    color: ${props => (props.$filter === props.value ? '#6f9ffb' : '#000000')};
+  }
+`;
+
+const ClearButton = styled.button`
+  color: #999999;
+  font-size: 0.9rem;
+  transition: all ${timer.default};
+
+  &:hover {
+    color: #000000;
+  }
 `;
 
 const TodoFooter = styled.div`
@@ -198,6 +226,8 @@ const TodoFooter = styled.div`
 
 export default function Todo() {
   const [inputValue, setInputValue] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
   const [todoList, setTodoList] = useState<TodoT[]>([
     { id: uuid(), completed: false, content: 'Complete online Assembly language course' },
     { id: uuid(), completed: false, content: 'fail at dieting' },
@@ -215,16 +245,12 @@ export default function Todo() {
         'Make too-long to-do lists appear ellipsed like this "blablablablablalablal"',
     },
   ]);
-  const inputRef = useRef<HTMLInputElement>(null);
+
   const dragItem = useRef('');
-  const dragEnterItem = useRef('');
-  const [edit, setEdit] = useState<{
-    id: null | string;
-    status: boolean;
-    inputValue: string;
-  }>({ id: null, status: false, inputValue: '' });
+  const dragoverItem = useRef('');
   const [draggedId, setDraggedId] = useState('');
   const [dragoverId, setDragoverId] = useState('');
+  const [edit, setEdit] = useState<EditT>({ id: null, status: false, inputValue: '' });
 
   const submitHandler = (e: FormEvent) => {
     e.preventDefault();
@@ -239,11 +265,91 @@ export default function Todo() {
     setInputValue(e.target.value);
   };
 
+  const classNameHandler = (todoItem: TodoT) => {
+    if (todoItem.id === draggedId && todoItem.id === dragoverId) {
+      return 'dragged dragover';
+    } else if (todoItem.id === draggedId) {
+      return 'dragged';
+    } else if (todoItem.id === dragoverId) {
+      return 'dragover';
+    } else {
+      return '';
+    }
+  };
+
+  const [filter, setFilter] = useState('all');
+  const FILTEROPTION = [
+    { value: 'all', revealName: 'All' },
+    { value: 'active', revealName: 'Active' },
+    { value: 'completed', revealName: 'Completed' },
+  ];
+
+  const filteredTodoList = () => {
+    switch (filter) {
+      case 'completed':
+        return todoList.filter(todoItem => todoItem.completed);
+      case 'active':
+        return todoList.filter(todoItem => !todoItem.completed);
+      default:
+        return [...todoList].sort((a, b) => +a.completed - +b.completed);
+    }
+  };
+
   interface TodoT {
     id: string;
     content: string;
     completed: boolean;
   }
+
+  const onDragStartHandler = (todoItem: TodoT) => {
+    setEdit({ id: null, status: false, inputValue: '' }); // 만약 editing하고 있었다면 editing을 종료시킴
+    dragItem.current = todoItem.id;
+    setDraggedId(todoItem.id);
+  };
+
+  const onDragEnterHandler = (todoItem: TodoT) => {
+    dragoverItem.current = todoItem.id;
+    setDragoverId(todoItem.id);
+  };
+
+  const onDragEndHandler = () => {
+    const newTodo = [...todoList];
+    const draggedItem = newTodo.find(todoItem => todoItem.id === dragItem.current);
+    const draggedItemIndex = newTodo.findIndex(todo => todo.id === dragItem.current);
+    const dropItemIndex = newTodo.findIndex(todo => todo.id === dragoverItem.current);
+    if (draggedItem) {
+      newTodo.splice(draggedItemIndex, 1); // draggedItem을 제거함
+      newTodo.splice(dropItemIndex, 0, draggedItem);
+      [dragoverItem.current, dragItem.current] = ['', '']; // reset
+      setTodoList(newTodo);
+    }
+    setDraggedId('');
+    setDragoverId('');
+  };
+
+  const onEditSubmitHandler = () => {
+    const newTodo = todoList.map(todoItem => {
+      if (todoItem.id === edit.id) {
+        return { ...todoItem, content: edit.inputValue };
+      } else {
+        return { ...todoItem };
+      }
+    });
+    setTodoList(newTodo);
+    setEdit({ id: '', status: false, inputValue: '' });
+  };
+
+  const onCheckHandler = (todoItem: TodoT) => {
+    setTodoList(prev => {
+      return prev.map(_t => {
+        if (_t.id === todoItem.id) {
+          return { ..._t, completed: !_t.completed };
+        } else {
+          return { ..._t };
+        }
+      });
+    });
+  };
 
   return (
     <>
@@ -262,50 +368,22 @@ export default function Todo() {
             <p>No to-dos here! Time for a break, maybe?</p>
           </TodoNothing>
         ) : (
-          todoList.map(todoItem => (
+          filteredTodoList().map(todoItem => (
             <TodoItem
               draggable
               key={todoItem.id}
-              className={
-                todoItem.id === draggedId && todoItem.id === dragoverId
-                  ? 'dragged dragover'
-                  : todoItem.id === draggedId
-                  ? 'dragged'
-                  : todoItem.id === dragoverId
-                  ? 'dragover'
-                  : ''
-              }
-              onDragStart={(e: DragEvent) => {
-                setEdit({ id: null, status: false, inputValue: '' }); // 만약 editing하고 있었다면 editing을 종료시킴
-                dragItem.current = todoItem.id;
-                setDraggedId(todoItem.id);
+              className={classNameHandler(todoItem)}
+              onDragStart={() => {
+                onDragStartHandler(todoItem);
               }}
-              onDragEnter={(e: DragEvent) => {
-                dragEnterItem.current = todoItem.id;
-                setDragoverId(todoItem.id);
+              onDragEnter={() => {
+                onDragEnterHandler(todoItem);
               }}
               onDragOver={(e: DragEvent) => {
                 e.preventDefault();
               }}
               onDragEnd={() => {
-                const newTodo = [...todoList];
-                const draggedItem = newTodo.find(
-                  todoItem => todoItem.id === dragItem.current
-                );
-                const draggedItemIndex = newTodo.findIndex(
-                  todo => todo.id === dragItem.current
-                );
-                const dropItemIndex = newTodo.findIndex(
-                  todo => todo.id === dragEnterItem.current
-                );
-                if (draggedItem) {
-                  newTodo.splice(draggedItemIndex, 1); // draggedItem을 제거함
-                  newTodo.splice(dropItemIndex, 0, draggedItem);
-                  [dragEnterItem.current, dragItem.current] = ['', '']; // reset
-                  setTodoList(newTodo);
-                }
-                setDraggedId('');
-                setDragoverId('');
+                onDragEndHandler();
               }}>
               {edit.id === todoItem.id ? (
                 <>
@@ -329,15 +407,7 @@ export default function Todo() {
                   <button
                     onClick={(e: MouseEvent) => {
                       e.stopPropagation();
-                      const newTodo = todoList.map(todoItem => {
-                        if (todoItem.id === edit.id) {
-                          return { ...todoItem, content: edit.inputValue };
-                        } else {
-                          return { ...todoItem };
-                        }
-                      });
-                      setTodoList(newTodo);
-                      setEdit({ id: '', status: false, inputValue: '' });
+                      onEditSubmitHandler();
                     }}>
                     submit
                   </button>
@@ -347,19 +417,11 @@ export default function Todo() {
                   <CheckButton
                     $completed={todoItem.completed}
                     onClick={() => {
-                      setTodoList(prev => {
-                        return prev.map(_t => {
-                          if (_t.id === todoItem.id) {
-                            return { ..._t, completed: !_t.completed };
-                          } else {
-                            return { ..._t };
-                          }
-                        });
-                      });
-                    }}>
-                    {/* <img src={checkIcon} width={10} height=></img> */}
-                  </CheckButton>
-                  <p
+                      onCheckHandler(todoItem);
+                    }}
+                  />
+                  <TodoItemContent
+                    $completed={todoItem.completed}
                     onClick={() => {
                       setEdit(prev => ({
                         inputValue: todoItem.content,
@@ -368,7 +430,7 @@ export default function Todo() {
                       }));
                     }}>
                     {todoItem.content}
-                  </p>
+                  </TodoItemContent>
                   <DeleteButton
                     onClick={() => {
                       setTodoList(prev => {
@@ -382,20 +444,44 @@ export default function Todo() {
             </TodoItem>
           ))
         )}
-        <TodoStatus>
-          <p>{todoList.length} items left</p>
+        <TodoStatus $currentFilter={filter}>
+          <p>{todoList.filter(todoItem => !todoItem.completed).length} items left</p>
           <TodoOption>
-            <button>All</button>
-            <button>Active</button>
-            <button>Completed</button>
+            {FILTEROPTION.map(option => (
+              <OptionButton
+                key={option.value}
+                onClick={() => {
+                  setFilter(option.value);
+                }}
+                value={option.value}
+                $filter={filter}>
+                {option.revealName}
+              </OptionButton>
+            ))}
           </TodoOption>
-          <button>Clear Completed</button>
+          <ClearButton
+            onClick={() => {
+              setTodoList(prev => {
+                const filtered = prev.filter(todoItem => !todoItem.completed);
+                return filtered;
+              });
+            }}>
+            Clear Completed
+          </ClearButton>
         </TodoStatus>
       </TodoBody>
       <TodoFooter>
-        <button>All</button>
-        <button>Active</button>
-        <button>Completed</button>
+        {FILTEROPTION.map(option => (
+          <OptionButton
+            key={option.value}
+            onClick={() => {
+              setFilter(option.value);
+            }}
+            value={option.value}
+            $filter={filter}>
+            {option.revealName}
+          </OptionButton>
+        ))}
       </TodoFooter>
     </>
   );
