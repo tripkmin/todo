@@ -23,14 +23,15 @@ const Background = styled.div<{ $theme: ThemeT }>`
 `;
 
 const TodoLayout = styled.section`
-  width: 580px;
-  margin: 5rem 0.5rem 0 0.5rem;
+  max-width: 580px;
+  width: 85%;
+  margin: 5rem 0.5rem;
   display: flex;
   flex-direction: column;
   gap: 3rem;
 
   @media screen and (max-width: ${size.mobile}) {
-    max-width: 580px;
+    margin: 5rem 2rem 0 2rem;
   }
 `;
 

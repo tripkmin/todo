@@ -1,4 +1,13 @@
-import { ChangeEvent, DragEvent, FormEvent, MouseEvent, useRef, useState } from 'react';
+import {
+  ChangeEvent,
+  DragEvent,
+  FormEvent,
+  MouseEvent,
+  RefObject,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import styled from 'styled-components';
 import deleteIcon from 'assets/images/icon-cross.svg';
 import { size, timer } from 'styles/constants';
@@ -7,6 +16,7 @@ import { EditT } from 'types/types';
 
 const Form = styled.form`
   display: flex;
+  align-items: flex-end;
   gap: 1rem;
   background-color: ${props => props.theme.background.secondary};
   padding: 1rem 1.4rem;
@@ -23,8 +33,7 @@ const CheckButton = styled.button<{ $completed: boolean }>`
 
   &::after {
     position: absolute;
-    content: '→';
-    transform: rotate(90deg);
+    content: '✓';
     color: white;
     top: 0;
     bottom: 0;
@@ -64,11 +73,12 @@ const DeleteButton = styled.button`
   }
 `;
 
-const SubmitButton = styled.button<{ disabled: boolean }>`
+const RoundedButton = styled.button<{ disabled?: boolean }>`
+  width: 28px;
+  height: 28px;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 4px 6px;
   color: ${props => props.theme.font.primary};
   border-radius: 5px;
   background: ${props => props.theme.background.light};
@@ -81,13 +91,11 @@ const SubmitButton = styled.button<{ disabled: boolean }>`
     bottom: 0px;
     left: 0px;
     right: 0px;
-    content: '→';
+    content: '';
     display: flex;
     justify-content: center;
     align-items: center;
-    color: white;
     border-radius: 5px;
-    background: linear-gradient(155deg, #edcb6c 0%, #ec79bc 100%);
     opacity: ${props => (props.disabled ? 0 : 1)};
     transition: opacity ${timer.fast};
   }
@@ -97,12 +105,52 @@ const SubmitButton = styled.button<{ disabled: boolean }>`
   }
 `;
 
-const Input = styled.input`
+const RoundedSubmitButton = styled(RoundedButton)`
+  &:after {
+    content: '→';
+    color: white;
+    background: linear-gradient(155deg, #edcb6c 0%, #ec79bc 100%);
+  }
+`;
+
+const RoundedCancelButton = styled(RoundedButton)`
+  &:after {
+    content: '⨉';
+    color: white;
+    background: linear-gradient(155deg, #edcb6c 0%, #ec79bc 100%);
+  }
+`;
+
+const RoundedCheckButton = styled(RoundedButton)`
+  &:after {
+    content: '✓';
+    color: white;
+    background: linear-gradient(155deg, #edcb6c 0%, #ec79bc 100%);
+  }
+`;
+
+const Textarea = styled.textarea`
   background-color: ${props => props.theme.background.secondary};
   color: ${props => props.theme.font.primary};
   transition: all ${timer.default};
   flex-grow: 1;
   border: 0;
+  resize: none;
+  scrollbar-color: ${props => props.theme.background.secondary};
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: ${props => props.theme.background.secondary};
+    border-radius: 10px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: ${props => props.theme.font.primary};
+    border-radius: 10px;
+  }
 
   &::placeholder {
     color: ${props => props.theme.font.secondary};
@@ -162,6 +210,14 @@ const TodoItem = styled.div`
     white-space: nowrap;
     text-overflow: ellipsis;
     font-weight: 500;
+
+    @media screen and (max-width: ${size.mobile}) {
+      font-size: 0.9rem;
+      display: -webkit-box;
+      white-space: normal;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
   }
 
   button {
@@ -205,6 +261,10 @@ const TodoStatus = styled.div<{ $currentFilter: string }>`
 const TodoOption = styled.div`
   display: flex;
   gap: 1rem;
+
+  @media screen and (max-width: ${size.mobile}) {
+    display: none;
+  }
 `;
 
 const OptionButton = styled.button<{ $filter: string; value: string }>`
@@ -243,8 +303,8 @@ const TodoFooter = styled.div`
 `;
 
 export default function Todo() {
-  const [inputValue, setInputValue] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [textareaValue, setTextareaValue] = useState('');
+  const TextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [todoList, setTodoList] = useState<TodoT[]>([
     { id: uuid(), completed: false, content: 'Complete online Assembly language course' },
@@ -260,7 +320,7 @@ export default function Todo() {
       id: uuid(),
       completed: false,
       content:
-        'Make too-long to-do lists appear ellipsed like this "blablablablablalablal"',
+        'Make too-long to-do lists appear ellipsed, but make it visible up to 2 lines on the mobile',
     },
   ]);
 
@@ -272,15 +332,18 @@ export default function Todo() {
 
   const submitHandler = (e: FormEvent) => {
     e.preventDefault();
-    setTodoList(prev => [...prev, { id: uuid(), content: inputValue, completed: false }]);
-    setInputValue('');
-    if (inputRef.current) {
-      inputRef.current.focus();
+    setTodoList(prev => [
+      ...prev,
+      { id: uuid(), content: textareaValue, completed: false },
+    ]);
+    setTextareaValue('');
+    if (TextareaRef.current) {
+      TextareaRef.current.focus();
     }
   };
 
-  const onChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
+  const onChangeHandler = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    setTextareaValue(e.target.value);
   };
 
   const classNameHandler = (todoItem: TodoT) => {
@@ -369,16 +432,35 @@ export default function Todo() {
     });
   };
 
+  const handleResizeHeight = (ref: RefObject<HTMLTextAreaElement>) => {
+    if (ref.current) {
+      ref.current.style.height = 'auto'; //height 초기화
+      ref.current.style.height = ref.current.scrollHeight + 'px';
+    }
+  };
+
+  const EditTextareaRef = useRef(null);
+
+  useEffect(() => {
+    handleResizeHeight(TextareaRef);
+  }, [textareaValue]);
+
+  useEffect(() => {
+    handleResizeHeight(EditTextareaRef);
+  }, [edit.inputValue]);
+
   return (
     <>
       <Form onSubmit={submitHandler}>
-        <Input
-          ref={inputRef}
-          type="text"
+        <Textarea
+          rows={1}
+          ref={TextareaRef}
           placeholder="Create a new todo"
-          value={inputValue}
-          onChange={onChangeHandler}></Input>
-        <SubmitButton disabled={inputValue.trim() === ''}>→</SubmitButton>
+          value={textareaValue}
+          onChange={onChangeHandler}></Textarea>
+        <RoundedSubmitButton disabled={textareaValue.trim() === ''}>
+          →
+        </RoundedSubmitButton>
       </Form>
       <TodoBody>
         {todoList.length === 0 ? (
@@ -405,8 +487,9 @@ export default function Todo() {
               }}>
               {edit.id === todoItem.id ? (
                 <>
-                  <Input
-                    type="text"
+                  <Textarea
+                    ref={EditTextareaRef}
+                    rows={1}
                     defaultValue={edit.inputValue}
                     onChange={e =>
                       setEdit(prev => ({
@@ -415,20 +498,21 @@ export default function Todo() {
                       }))
                     }
                   />
-                  <button
+                  <RoundedCancelButton
                     onClick={(e: MouseEvent) => {
                       e.stopPropagation();
                       setEdit({ id: '', status: false, inputValue: '' });
                     }}>
-                    cancel
-                  </button>
-                  <button
+                    ⨉
+                  </RoundedCancelButton>
+                  <RoundedCheckButton
+                    disabled={edit.inputValue.trim() === ''}
                     onClick={(e: MouseEvent) => {
                       e.stopPropagation();
                       onEditSubmitHandler();
                     }}>
-                    submit
-                  </button>
+                    ✓
+                  </RoundedCheckButton>
                 </>
               ) : (
                 <>

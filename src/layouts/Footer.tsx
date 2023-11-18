@@ -6,7 +6,7 @@ const FooterBox = styled.footer`
   align-items: center;
 
   p {
-    color: #777;
+    color: ${props => props.theme.font.secondary};
   }
 `;
 

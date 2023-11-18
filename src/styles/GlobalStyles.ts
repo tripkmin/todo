@@ -83,7 +83,10 @@ const GlobalStyles = createGlobalStyle`
     }
 
     #root {
+      min-width: 100vw;
       min-height: 100vh;
+      display: flex;
+      justify-content: center;
     }
 `;
 
