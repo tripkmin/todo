@@ -1,0 +1,32 @@
+[
+  {
+    "id": "a00b0862-3587-953f-e767-5d5afd342c52",
+    "completed": false,
+    "content": "Complete online Assembly language course"
+  },
+  {
+    "id": "ccdcbc31-adbf-dbdc-d25a-08ec5edd0887",
+    "completed": false,
+    "content": "fail at dieting"
+  },
+  {
+    "id": "d6a128af-baa8-7211-bfdc-fac4746e5eda",
+    "completed": false,
+    "content": "Clean an air fryer that hasn't been cleaned in a month"
+  },
+  {
+    "id": "d05b458b-9835-1509-750d-37e4febb8aaa",
+    "completed": false,
+    "content": "Catch up on homework"
+  },
+  {
+    "id": "304c166d-b92a-757c-4644-90ec4a0e2553",
+    "completed": false,
+    "content": "Bathing my cat"
+  },
+  {
+    "id": "867bf580-09bc-79c3-8497-e78997f139d9",
+    "completed": false,
+    "content": "Make too-long to-do lists appear ellipsed, but make it visible up to 2 lines on the mobile"
+  }
+]

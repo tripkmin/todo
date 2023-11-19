@@ -13,6 +13,7 @@ import deleteIcon from 'assets/images/icon-cross.svg';
 import { size, timer } from 'styles/constants';
 import uuid from 'react-uuid';
 import { EditT } from 'types/types';
+import useDidMountEffect from 'hooks/useDidMountEffect';
 
 const Form = styled.form`
   display: flex;
@@ -136,21 +137,6 @@ const Textarea = styled.textarea`
   flex-grow: 1;
   border: 0;
   resize: none;
-  scrollbar-color: ${props => props.theme.background.secondary};
-
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: ${props => props.theme.background.secondary};
-    border-radius: 10px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: ${props => props.theme.font.primary};
-    border-radius: 10px;
-  }
 
   &::placeholder {
     color: ${props => props.theme.font.secondary};
@@ -299,6 +285,7 @@ const TodoFooter = styled.div`
     border-radius: 0.5rem;
     background-color: ${props => props.theme.background.secondary};
     box-shadow: 0px 30px 80px 10px rgba(0, 0, 0, 0.1);
+    transition: background-color ${timer.default};
   }
 `;
 
@@ -306,23 +293,7 @@ export default function Todo() {
   const [textareaValue, setTextareaValue] = useState('');
   const TextareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const [todoList, setTodoList] = useState<TodoT[]>([
-    { id: uuid(), completed: false, content: 'Complete online Assembly language course' },
-    { id: uuid(), completed: false, content: 'fail at dieting' },
-    {
-      id: uuid(),
-      completed: false,
-      content: `Clean an air fryer that hasn't been cleaned in a month`,
-    },
-    { id: uuid(), completed: false, content: 'Catch up on homework' },
-    { id: uuid(), completed: false, content: 'Bathing my cat' },
-    {
-      id: uuid(),
-      completed: false,
-      content:
-        'Make too-long to-do lists appear ellipsed, but make it visible up to 2 lines on the mobile',
-    },
-  ]);
+  const [todoList, setTodoList] = useState<TodoT[]>([]);
 
   const dragItem = useRef('');
   const dragoverItem = useRef('');
@@ -449,6 +420,27 @@ export default function Todo() {
     handleResizeHeight(EditTextareaRef);
   }, [edit.inputValue]);
 
+  useEffect(() => {
+    const localTodoData = localStorage.getItem('todo_list');
+    const todoFetch = async () => {
+      if (!localTodoData) {
+        // initialize by data.json
+        const res = await fetch('./data.json');
+        const data = await res.json();
+        localStorage.setItem('todo_list', JSON.stringify(data));
+        setTodoList(data);
+      } else {
+        setTodoList(JSON.parse(localTodoData));
+      }
+    };
+
+    todoFetch();
+  }, []);
+
+  useDidMountEffect(() => {
+    localStorage.setItem('todo_list', JSON.stringify(todoList));
+  }, [todoList]);
+
   return (
     <>
       <Form onSubmit={submitHandler}>
@@ -457,7 +449,8 @@ export default function Todo() {
           ref={TextareaRef}
           placeholder="Create a new todo"
           value={textareaValue}
-          onChange={onChangeHandler}></Textarea>
+          onChange={onChangeHandler}
+        ></Textarea>
         <RoundedSubmitButton disabled={textareaValue.trim() === ''}>
           →
         </RoundedSubmitButton>
@@ -484,7 +477,8 @@ export default function Todo() {
               }}
               onDragEnd={() => {
                 onDragEndHandler();
-              }}>
+              }}
+            >
               {edit.id === todoItem.id ? (
                 <>
                   <Textarea
@@ -502,7 +496,8 @@ export default function Todo() {
                     onClick={(e: MouseEvent) => {
                       e.stopPropagation();
                       setEdit({ id: '', status: false, inputValue: '' });
-                    }}>
+                    }}
+                  >
                     ⨉
                   </RoundedCancelButton>
                   <RoundedCheckButton
@@ -510,7 +505,8 @@ export default function Todo() {
                     onClick={(e: MouseEvent) => {
                       e.stopPropagation();
                       onEditSubmitHandler();
-                    }}>
+                    }}
+                  >
                     ✓
                   </RoundedCheckButton>
                 </>
@@ -530,7 +526,8 @@ export default function Todo() {
                         id: todoItem.id,
                         status: !prev.status,
                       }));
-                    }}>
+                    }}
+                  >
                     {todoItem.content}
                   </TodoItemContent>
                   <DeleteButton
@@ -538,7 +535,8 @@ export default function Todo() {
                       setTodoList(prev => {
                         return prev.filter(_t => _t.id !== todoItem.id);
                       });
-                    }}>
+                    }}
+                  >
                     <img src={deleteIcon}></img>
                   </DeleteButton>
                 </>
@@ -556,7 +554,8 @@ export default function Todo() {
                   setFilter(option.value);
                 }}
                 value={option.value}
-                $filter={filter}>
+                $filter={filter}
+              >
                 {option.revealName}
               </OptionButton>
             ))}
@@ -567,7 +566,8 @@ export default function Todo() {
                 const filtered = prev.filter(todoItem => !todoItem.completed);
                 return filtered;
               });
-            }}>
+            }}
+          >
             Clear Completed
           </ClearButton>
         </TodoStatus>
@@ -580,7 +580,8 @@ export default function Todo() {
               setFilter(option.value);
             }}
             value={option.value}
-            $filter={filter}>
+            $filter={filter}
+          >
             {option.revealName}
           </OptionButton>
         ))}

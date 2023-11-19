@@ -26,7 +26,23 @@ const GlobalStyles = createGlobalStyle`
       display: flex;
       justify-content: center;
       background-color: ${props => props.theme.background.primary};
-      transition: background-color ${timer.default}
+      transition: background-color ${timer.default};
+      scrollbar-color: ${props => props.theme.background.secondary};
+      overflow-y: scroll;
+
+        &::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        &::-webkit-scrollbar-track {
+          background: ${props => props.theme.background.secondary};
+          border-radius: 10px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+          background: ${props => props.theme.font.primary};
+          border-radius: 10px;
+        }
     }
     ol, ul{
       list-style: none;
@@ -83,7 +99,7 @@ const GlobalStyles = createGlobalStyle`
     }
 
     #root {
-      min-width: 100vw;
+      width:100%;
       min-height: 100vh;
       display: flex;
       justify-content: center;

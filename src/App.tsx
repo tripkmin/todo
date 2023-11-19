@@ -13,7 +13,7 @@ import { ThemeT } from 'types/types';
 const Background = styled.div<{ $theme: ThemeT }>`
   background-image: ${props =>
     props.$theme === 'light' ? `url(${lightBg})` : `url(${darkBg})`};
-  width: 100vw;
+  width: 100%;
   height: 300px;
   background-size: cover;
   position: absolute;
@@ -23,7 +23,6 @@ const Background = styled.div<{ $theme: ThemeT }>`
 `;
 
 const TodoLayout = styled.section`
-  max-width: 580px;
   width: 85%;
   margin: 5rem 0.5rem;
   display: flex;
@@ -31,7 +30,7 @@ const TodoLayout = styled.section`
   gap: 3rem;
 
   @media screen and (max-width: ${size.mobile}) {
-    margin: 5rem 2rem 0 2rem;
+    margin: 5rem 2rem;
   }
 `;
 
