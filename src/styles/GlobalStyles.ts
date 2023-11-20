@@ -104,6 +104,15 @@ const GlobalStyles = createGlobalStyle`
       display: flex;
       justify-content: center;
     }
+
+    #toast {
+      position: fixed;
+      width:100%;
+      /* padding:0 2rem; */
+      bottom: 0;
+      left: 0;
+      z-index: 1;
+    }
 `;
 
 export default GlobalStyles;
