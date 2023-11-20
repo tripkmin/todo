@@ -9,7 +9,6 @@ import {
   useState,
 } from 'react';
 import styled from 'styled-components';
-import deleteIcon from 'assets/images/icon-cross.svg';
 import { size, timer } from 'styles/constants';
 import uuid from 'react-uuid';
 import { EditT, TodoT } from 'types/types';
@@ -27,6 +26,7 @@ const Form = styled.form`
   border-radius: 0.5rem;
   transition: background-color ${timer.default};
 `;
+
 const CheckButton = styled.button<{ $completed: boolean }>`
   padding: 10px;
   border-radius: 50%;
@@ -61,27 +61,18 @@ const TodoItemContent = styled.p<{ $completed: boolean }>`
   transition: color ${timer.default};
 `;
 
-const DeleteButton = styled.button`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  opacity: 0;
-  transition: opacity ${timer.fast};
-
-  &:focus {
-    opacity: 1;
-  }
-
-  @media screen and (max-width: ${size.mobile}) {
-    opacity: 1;
-  }
-`;
-
-const RoundedSubmitButton = styled(RoundedButton)`
+const RoundedSubmitButton = styled(RoundedButton)<{ disabled: boolean }>`
   &:after {
     content: '→';
     color: white;
     background: linear-gradient(155deg, #edcb6c 0%, #ec79bc 100%);
+    opacity: ${props => (props.disabled ? 0 : 1)};
+  }
+
+  &:hover {
+    &:after {
+      opacity: ${props => (props.disabled ? 0 : 1)};
+    }
   }
 `;
 
@@ -89,7 +80,7 @@ const RoundedCancelButton = styled(RoundedButton)`
   &:after {
     content: '⨉';
     color: white;
-    background: linear-gradient(155deg, #776a45 0%, #861758 100%);
+    background: linear-gradient(155deg, #edcb6c 0%, #ec79bc 100%);
   }
 `;
 
@@ -98,6 +89,18 @@ const RoundedCheckButton = styled(RoundedButton)`
     content: '✓';
     color: white;
     background: linear-gradient(155deg, #edcb6c 0%, #ec79bc 100%);
+  }
+`;
+
+const RoundedDeleteButton = styled(RoundedCancelButton)`
+  opacity: 0;
+
+  &:focus {
+    opacity: 1;
+  }
+
+  @media screen and (max-width: ${size.mobile}) {
+    opacity: 1;
   }
 `;
 
@@ -182,7 +185,7 @@ const TodoItem = styled.div`
   }
 
   &:hover {
-    ${DeleteButton} {
+    ${RoundedDeleteButton} {
       opacity: 1;
     }
   }
@@ -405,8 +408,7 @@ export default function Todo() {
     localStorage.setItem('todo_list', JSON.stringify(todoList));
   }, [todoList]);
 
-  const { deletes, setDeletes, clearDeletes, pushDeletes, popDeletes, redoDeletes } =
-    useDelete();
+  const { deletes, clearDeletes, pushDeletes, popDeletes } = useDelete();
 
   return (
     <>
@@ -414,17 +416,14 @@ export default function Todo() {
         deletes={deletes}
         clearDeletes={clearDeletes}
         popDeletes={popDeletes}
-        setTodoList={setTodoList}
-        redoDeletes={redoDeletes}
-      ></ToastPortal>
+        setTodoList={setTodoList}></ToastPortal>
       <Form onSubmit={submitHandler}>
         <Textarea
           rows={1}
           ref={TextareaRef}
           placeholder="Create a new todo"
           value={textareaValue}
-          onChange={onChangeHandler}
-        ></Textarea>
+          onChange={onChangeHandler}></Textarea>
         <RoundedSubmitButton disabled={textareaValue.trim() === ''}>
           →
         </RoundedSubmitButton>
@@ -451,8 +450,7 @@ export default function Todo() {
               }}
               onDragEnd={() => {
                 onDragEndHandler();
-              }}
-            >
+              }}>
               {edit.id === todoItem.id ? (
                 <>
                   <Textarea
@@ -470,8 +468,7 @@ export default function Todo() {
                     onClick={(e: MouseEvent) => {
                       e.stopPropagation();
                       setEdit({ id: '', status: false, inputValue: '' });
-                    }}
-                  >
+                    }}>
                     ⨉
                   </RoundedCancelButton>
                   <RoundedCheckButton
@@ -479,8 +476,7 @@ export default function Todo() {
                     onClick={(e: MouseEvent) => {
                       e.stopPropagation();
                       onEditSubmitHandler();
-                    }}
-                  >
+                    }}>
                     ✓
                   </RoundedCheckButton>
                 </>
@@ -500,20 +496,18 @@ export default function Todo() {
                         id: todoItem.id,
                         status: !prev.status,
                       }));
-                    }}
-                  >
+                    }}>
                     {todoItem.content}
                   </TodoItemContent>
-                  <DeleteButton
+                  <RoundedDeleteButton
                     onClick={() => {
                       pushDeletes(todoItem);
                       setTodoList(prev => {
                         return prev.filter(_t => _t.id !== todoItem.id);
                       });
-                    }}
-                  >
-                    <img src={deleteIcon}></img>
-                  </DeleteButton>
+                    }}>
+                    ⨉
+                  </RoundedDeleteButton>
                 </>
               )}
             </TodoItem>
@@ -529,8 +523,7 @@ export default function Todo() {
                   setFilter(option.value);
                 }}
                 value={option.value}
-                $filter={filter}
-              >
+                $filter={filter}>
                 {option.revealName}
               </OptionButton>
             ))}
@@ -541,8 +534,7 @@ export default function Todo() {
                 const filtered = prev.filter(todoItem => !todoItem.completed);
                 return filtered;
               });
-            }}
-          >
+            }}>
             Clear Completed
           </ClearButton>
         </TodoStatus>
@@ -555,8 +547,7 @@ export default function Todo() {
               setFilter(option.value);
             }}
             value={option.value}
-            $filter={filter}
-          >
+            $filter={filter}>
             {option.revealName}
           </OptionButton>
         ))}

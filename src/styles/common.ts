@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import { timer } from './constants';
 
-export const RoundedButton = styled.button<{ disabled?: boolean }>`
+export const RoundedButton = styled.button`
   width: 28px;
   height: 28px;
   display: flex;
@@ -24,11 +24,23 @@ export const RoundedButton = styled.button<{ disabled?: boolean }>`
     justify-content: center;
     align-items: center;
     border-radius: 5px;
-    opacity: ${props => (props.disabled ? 0 : 1)};
-    transition: opacity ${timer.fast};
+    transition: opacity ${timer.default};
+    opacity: 0;
   }
 
   &:disabled {
     cursor: not-allowed;
+  }
+
+  &:hover {
+    &:after {
+      opacity: 1;
+    }
+  }
+
+  &:focus {
+    &:after {
+      opacity: 1;
+    }
   }
 `;

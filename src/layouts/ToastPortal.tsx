@@ -2,13 +2,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Dispatch, SetStateAction, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import styled from 'styled-components';
+import { RoundedButton } from 'styles/common';
 import { size, timer } from 'styles/constants';
 import { TodoT } from 'types/types';
 
 const Toast = styled(motion.div)`
-  background-color: ${props => props.theme.background.toast};
+  background-color: ${props => props.theme.background.secondary};
   transition: background-color ${timer.default}, color ${timer.default};
-  color: ${props => props.theme.font.secondary};
+  color: ${props => props.theme.font.primary};
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
   display: flex;
@@ -19,6 +20,12 @@ const Toast = styled(motion.div)`
   bottom: 2rem;
   width: 400px;
   height: 4em;
+  border: 1px solid ${props => props.theme.border.secondary};
+
+  div {
+    display: flex;
+    gap: 1rem;
+  }
 
   @media screen and (max-width: ${size.mobile}) {
     width: calc(100% - 4rem);
@@ -26,12 +33,32 @@ const Toast = styled(motion.div)`
     margin: 0 2rem;
   }
 `;
+
+const UndoButton = styled(RoundedButton)`
+  color: ${props => props.theme.font.primary};
+
+  &:after {
+    content: '↻';
+    color: white;
+    background: linear-gradient(155deg, #edcb6c 0%, #ec79bc 100%);
+  }
+`;
+
+const ClearButton = styled(RoundedButton)`
+  color: ${props => props.theme.font.primary};
+
+  &:after {
+    content: '⨉';
+    color: white;
+    background: linear-gradient(155deg, #edcb6c 0%, #ec79bc 100%);
+  }
+`;
+
 interface ToastPortalT {
   deletes: TodoT[];
   clearDeletes: () => void;
   popDeletes: () => TodoT;
   setTodoList: Dispatch<SetStateAction<TodoT[]>>;
-  redoDeletes: (redoId: string) => TodoT | undefined;
 }
 
 export default function ToastPortal({
@@ -69,8 +96,8 @@ export default function ToastPortal({
             key={deleteItem.id}>
             <p>To-do deleted</p>
             <div>
-              <button onClick={redoButtonHandler}>undo</button>
-              <button onClick={clearDeletes}>close</button>
+              <UndoButton onClick={redoButtonHandler}>↻</UndoButton>
+              <ClearButton onClick={clearDeletes}>⨉</ClearButton>
             </div>
           </Toast>
         ))}
