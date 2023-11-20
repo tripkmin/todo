@@ -2,7 +2,7 @@ import styled, { ThemeProvider } from 'styled-components';
 import GlobalStyles from 'styles/GlobalStyles';
 import lightBg from 'assets/images/bg-desktop-light.jpg';
 import darkBg from 'assets/images/bg-desktop-dark.jpg';
-import { size, themeMode } from 'styles/constants';
+import { size, themeMode, timer } from 'styles/constants';
 import Header from 'layouts/Header';
 import Main from 'layouts/Main';
 import Footer from 'layouts/Footer';
@@ -11,8 +11,7 @@ import useTheme from 'hooks/useTheme';
 import { ThemeT } from 'types/types';
 
 const Background = styled.div<{ $theme: ThemeT }>`
-  background-image: ${props =>
-    props.$theme === 'light' ? `url(${lightBg})` : `url(${darkBg})`};
+  background-image: url(${lightBg});
   width: 100%;
   height: 300px;
   background-size: cover;
@@ -20,6 +19,20 @@ const Background = styled.div<{ $theme: ThemeT }>`
   top: 0;
   left: 0;
   z-index: -1;
+
+  &::after {
+    content: '';
+    background-image: url(${darkBg});
+    width: 100%;
+    height: 300px;
+    background-size: cover;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    opacity: ${props => (props.$theme === 'light' ? 0 : 1)};
+    transition: opacity ${timer.default};
+  }
 `;
 
 const TodoLayout = styled.section`

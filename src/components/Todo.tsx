@@ -132,10 +132,10 @@ const TodoItem = styled.div`
   padding: 0.9rem 1.4rem;
   border-bottom: 1px solid ${props => props.theme.border.secondary};
   gap: 1rem;
-  transition: border-bottom ${timer.default};
+  transition: all ${timer.default};
 
   &.dragged {
-    background-color: ${props => props.theme.background.light};
+    background-color: ${props => props.theme.background.dragged};
   }
 
   &.dragover {

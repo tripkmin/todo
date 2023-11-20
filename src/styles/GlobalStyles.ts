@@ -27,23 +27,10 @@ const GlobalStyles = createGlobalStyle`
       justify-content: center;
       background-color: ${props => props.theme.background.primary};
       transition: background-color ${timer.default};
-      scrollbar-color: ${props => props.theme.background.secondary};
-      overflow-y: scroll;
-
-        &::-webkit-scrollbar {
-          width: 8px;
-        }
-
-        &::-webkit-scrollbar-track {
-          background: ${props => props.theme.background.secondary};
-          border-radius: 10px;
-        }
-
-        &::-webkit-scrollbar-thumb {
-          background: ${props => props.theme.font.primary};
-          border-radius: 10px;
-        }
+      scrollbar-color: ${props => props.theme.background.secondary} ${props =>
+  props.theme.background.secondary};
     }
+
     ol, ul{
       list-style: none;
     }
