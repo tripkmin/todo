@@ -1,14 +1,14 @@
-import { motion, AnimatePresence, usePresence, useMotionValue } from 'framer-motion';
-import { Dispatch, SetStateAction, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Dispatch, SetStateAction, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 import { size, timer } from 'styles/constants';
 import { TodoT } from 'types/types';
 
 const Toast = styled(motion.div)`
-  background-color: ${props => props.theme.background.light};
+  background-color: ${props => props.theme.background.toast};
   transition: background-color ${timer.default}, color ${timer.default};
-  color: ${props => props.theme.font.primary};
+  color: ${props => props.theme.font.secondary};
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
   display: flex;
@@ -39,42 +39,37 @@ export default function ToastPortal({
   clearDeletes,
   popDeletes,
   setTodoList,
-  redoDeletes,
 }: ToastPortalT) {
-  // const [isPresent, safeToRemove] = usePresence();
-  // useEffect(() => {
-  //   !isPresent && console.log("I've been removed!");
-  // }, [isPresent]);
+  const clickRef = useRef(false);
 
-  const 클릭했냐 = useMotionValue(false);
+  /**
+   * undo 버튼을 눌러 닫기 애니메이션이 진행 중일 때
+   * 또 다시 버튼을 눌렀을 때에는 작동이 되지 않도록 clickRef를 통해 설정.
+   */
+  const redoButtonHandler = () => {
+    if (clickRef.current) return;
+
+    clickRef.current = true;
+    const popItems = popDeletes();
+    popItems && setTodoList(prev => [...prev, popItems]);
+  };
 
   return createPortal(
     <>
       <AnimatePresence
         onExitComplete={() => {
-          클릭했냐.set(false);
-        }}
-      >
+          clickRef.current = false;
+        }}>
         {deletes.map(deleteItem => (
           <Toast
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.3, type: 'spring' }}
             exit={{ opacity: 0, x: 20 }}
-            key={deleteItem.id}
-          >
+            key={deleteItem.id}>
             <p>To-do deleted</p>
             <div>
-              <button
-                onClick={e => {
-                  if (클릭했냐.get()) return;
-                  클릭했냐.set(true);
-                  const popItems = popDeletes();
-                  popItems && setTodoList(prev => [...prev, popItems]);
-                }}
-              >
-                undo
-              </button>
+              <button onClick={redoButtonHandler}>undo</button>
               <button onClick={clearDeletes}>close</button>
             </div>
           </Toast>

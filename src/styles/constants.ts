@@ -2,7 +2,12 @@ import { ThemeModeT } from 'types/types';
 
 export const themeMode: ThemeModeT = {
   light: {
-    background: { primary: '#fafafa', secondary: '#ffffff', light: '#dddddd' },
+    background: {
+      primary: '#fafafa',
+      secondary: '#ffffff',
+      light: '#dddddd',
+      toast: '#c2deff',
+    },
     font: {
       header: '#ffffff',
       primary: '#5e5d62',
@@ -17,7 +22,12 @@ export const themeMode: ThemeModeT = {
     },
   },
   dark: {
-    background: { primary: '#181824', secondary: '#25273c', light: '#545888' },
+    background: {
+      primary: '#181824',
+      secondary: '#25273c',
+      light: '#545888',
+      toast: '#4727a3',
+    },
     font: {
       header: '#ffffff',
       primary: '#c0c2dc',
