@@ -13,6 +13,10 @@ export const RoundedButton = styled.button`
   position: relative;
   transition: all ${timer.default};
 
+  // Applying a gradient to the background does not work with transitions.
+  // To implement a transition, a pseudo-element of the same size is created,
+  // and opacity is adjusted as a means of achieving the transition effect.
+
   // gradient를 적용한 background는 transition이 먹히지 않음.
   // 따라서 똑같은 크기의 요소를 가상으로 만들어 opacity를 조절하는 식으로 transition을 구현.
   &:after {

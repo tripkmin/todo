@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { TodoT } from 'types/types';
 
 export default function useDelete() {
+  // An array that can contain multiple TodoT items, possibly through 'Clear Complete'.
   // Clear Complete를 통해 여러 TodoT가 있는 배열이 들어올 수도 있음.
   const [deletes, setDeletes] = useState<(TodoT | TodoT[])[]>([]);
 

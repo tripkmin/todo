@@ -38,6 +38,9 @@ const Background = styled.div<{ $theme: ThemeT }>`
   left: 0;
   z-index: -1;
 
+  // To achieve the transition effect of the background-image,
+  // a pseudo-element with the same size is created, and opacity is adjusted.
+
   // background-image의 transition 효과를 위해
   // 똑같은 크기의 darkBg div 박스를 가상으로 만들어 opacity를 조절해 구현함.
   &::after {

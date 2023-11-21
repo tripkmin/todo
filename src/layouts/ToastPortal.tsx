@@ -19,15 +19,19 @@ export default function ToastPortal({
   popDeletes,
   setTodoList,
 }: ToastPortalT) {
+  // Ref to prevent button clicks during the exit animation.
+  // 닫기 애니메이션이 진행 중일 때 버튼 동작을 방지하기 위한 ref
   const clickRef = useRef(false);
 
   const undoButtonHandler = () => {
+    // Prevents the button from functioning while the closing animation is in progress.
     // 닫기 애니메이션이 진행 중일 때 버튼을 누르면 작동이 되지 않도록 함.
     if (clickRef.current) return;
 
     clickRef.current = true;
     const popItems = popDeletes();
 
+    // Handles the case where TodoT[] can come through Clear Completed.
     // Clear Completed를 통해 TodoT[]가 들어올 수 있기 때문에 분리해서 다룸.
     Array.isArray(popItems) && popItems
       ? setTodoList(prev => [...prev, ...popItems])
@@ -39,6 +43,7 @@ export default function ToastPortal({
   };
 
   const noticeMessage = (item: TodoT | TodoT[]) => {
+    // Handles the case where TodoT[] can come through Clear Completed.
     // Clear Completed를 통해 TodoT[]가 들어올 수 있기 때문에 분리해서 다룸.
     return Array.isArray(item) ? (
       <p>All completed To-do items deleted</p>
@@ -93,10 +98,6 @@ const Toast = styled(motion.div)`
   div {
     display: flex;
     gap: 1rem;
-  }
-
-  p {
-    font-weight: 600;
   }
 
   @media screen and (max-width: ${size.mobile}) {

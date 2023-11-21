@@ -37,6 +37,8 @@ export default function Todo() {
     { value: 'completed', revealName: 'Completed' },
   ];
 
+  // Load existing 'todo_list' from local storage if available,
+  // otherwise load default data from 'data.json'.
   // 기존 Local storage에 저장된 todo_list가 있으면 불러와서 상태로 저장
   // 없을 경우 기본 더미 데이터(data.json)를 불러와 상태로 저장
   useEffect(() => {
@@ -55,6 +57,7 @@ export default function Todo() {
     todoFetch();
   }, []);
 
+  // Update local storage whenever 'todoList' state changes after the initial mount.
   // TodoList state가 첫 마운트 이후 갱신될 때마다 local storage에 같이 갱신시킴
   useDidMountEffect(() => {
     localStorage.setItem('todo_list', JSON.stringify(todoList));
@@ -88,11 +91,13 @@ export default function Todo() {
     }
   };
 
+  // Cancel edit mode when dragging or pressing Esc during editing a Todo item.
   // Todo item을 edit하고 있는 도중 드래그 하거나 Esc를 눌렀을 때 edit이 취소되도록 함.
   const editInitialize = () => {
     setEdit({ id: null, status: false, inputValue: '' });
   };
 
+  // Attach an event listener to the global document for the 'Esc' key.
   // EditInput에다가 onKeyDown 붙여도 되지만, 이럴 경우 포커스가 맞춰지지 않았을 때
   // ESC를 눌러도 반응이 없으므로 document 전역에 이벤트 리스터를 붙였음.
   useEffect(() => {
@@ -137,7 +142,7 @@ export default function Todo() {
     const draggedItemIndex = newTodo.findIndex(todo => todo.id === dragItem.current);
     const dropItemIndex = newTodo.findIndex(todo => todo.id === dragoverItem.current);
     if (draggedItem) {
-      newTodo.splice(draggedItemIndex, 1); // draggedItem을 제거함
+      newTodo.splice(draggedItemIndex, 1); // Remove the draggedItem
       newTodo.splice(dropItemIndex, 0, draggedItem);
       [dragoverItem.current, dragItem.current] = ['', '']; // reset
       setTodoList(newTodo);
@@ -170,14 +175,16 @@ export default function Todo() {
     });
   };
 
+  // Dynamically adjust the scroll size of the Textarea.
   // Textarea의 스크롤 사이즈를 동적으로 조절함
   const handleResizeHeight = (ref: RefObject<HTMLTextAreaElement>) => {
     const INNER_HEIGHT = 24;
 
     if (ref.current && ref.current.scrollHeight <= INNER_HEIGHT * 4) {
-      ref.current.style.height = 'auto'; //height 초기화
+      ref.current.style.height = 'auto'; // Reset height
       ref.current.style.height =
         Math.min(ref.current.scrollHeight, INNER_HEIGHT * 4) + 'px';
+      // Limit the scroll height to not exceed 4 lines.
       // Scroll height가 4줄 이상 넘어간다면 그 이상 넘어가지 못하게 함.
     }
   };
@@ -513,6 +520,9 @@ const TodoItem = styled.div`
 
 const TodoNothing = styled(TodoItem)`
   /*
+  Increase the Y-axis padding to 1.05rem to compensate for the reduced font size of the 'p' element,
+  ensuring that the size difference with TodoItem remains consistent.
+  
   p의 폰트 사이즈가 줄어든 만큼 y축 패딩값을 1.05rem으로 늘려
   TodoItem과의 크기 차이가 나지 않도록 보정함
   */
