@@ -407,6 +407,22 @@ export default function Todo() {
 
   const { deletes, clearDeletes, pushDeletes, popDeletes } = useDelete();
 
+  // EditInput에다가 onKeyDown 붙여도 되지만, 이럴 경우 포커스가 맞춰지지 않았을 때
+  // ESC를 눌러도 반응이 없으므로 document 전역에 이벤트 리스터를 붙였음.
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Esc' || e.keyCode === 27) {
+        setEdit({ id: '', status: false, inputValue: '' });
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   return (
     <>
       <ToastPortal
@@ -420,7 +436,13 @@ export default function Todo() {
           ref={TextareaRef}
           placeholder="Create a new todo"
           value={textareaValue}
-          onChange={onChangeHandler}></Textarea>
+          onChange={onChangeHandler}
+          onKeyDown={e => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              submitHandler(e);
+            }
+          }}></Textarea>
         <RoundedSubmitButton disabled={textareaValue.trim() === ''}>
           →
         </RoundedSubmitButton>
