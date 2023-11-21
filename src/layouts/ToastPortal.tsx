@@ -6,6 +6,73 @@ import { RoundedButton } from 'styles/common';
 import { size, timer } from 'styles/constants';
 import { TodoT } from 'types/types';
 
+interface ToastPortalT {
+  deletes: (TodoT | TodoT[])[];
+  clearDeletes: () => void;
+  popDeletes: () => TodoT | TodoT[];
+  setTodoList: Dispatch<SetStateAction<TodoT[]>>;
+}
+
+export default function ToastPortal({
+  deletes,
+  clearDeletes,
+  popDeletes,
+  setTodoList,
+}: ToastPortalT) {
+  const clickRef = useRef(false);
+
+  const undoButtonHandler = () => {
+    // 닫기 애니메이션이 진행 중일 때 버튼을 누르면 작동이 되지 않도록 함.
+    if (clickRef.current) return;
+
+    clickRef.current = true;
+    const popItems = popDeletes();
+
+    // Clear Completed를 통해 TodoT[]가 들어올 수 있기 때문에 분리해서 다룸.
+    Array.isArray(popItems) && popItems
+      ? setTodoList(prev => [...prev, ...popItems])
+      : setTodoList(prev => [...prev, popItems]);
+  };
+
+  const getKey = (item: TodoT | TodoT[]) => {
+    return Array.isArray(item) ? item[0].id : item.id;
+  };
+
+  const noticeMessage = (item: TodoT | TodoT[]) => {
+    // Clear Completed를 통해 TodoT[]가 들어올 수 있기 때문에 분리해서 다룸.
+    return Array.isArray(item) ? (
+      <p>All completed To-do items deleted</p>
+    ) : (
+      <p>To-do item deleted</p>
+    );
+  };
+
+  return createPortal(
+    <>
+      <AnimatePresence
+        onExitComplete={() => {
+          clickRef.current = false;
+        }}>
+        {deletes.map(deleteItem => (
+          <Toast
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, type: 'spring' }}
+            exit={{ opacity: 0, x: 20 }}
+            key={getKey(deleteItem)}>
+            {noticeMessage(deleteItem)}
+            <div>
+              <UndoButton onClick={undoButtonHandler}>↻</UndoButton>
+              <ClearButton onClick={clearDeletes}>⨉</ClearButton>
+            </div>
+          </Toast>
+        ))}
+      </AnimatePresence>
+    </>,
+    document.querySelector('#toast') as HTMLElement
+  );
+}
+
 const Toast = styled(motion.div)`
   background-color: ${props => props.theme.background.secondary};
   transition: background-color ${timer.default}, color ${timer.default},
@@ -26,6 +93,10 @@ const Toast = styled(motion.div)`
   div {
     display: flex;
     gap: 1rem;
+  }
+
+  p {
+    font-weight: 600;
   }
 
   @media screen and (max-width: ${size.mobile}) {
@@ -54,63 +125,3 @@ const ClearButton = styled(RoundedButton)`
     background: linear-gradient(155deg, #edcb6c 0%, #ec79bc 100%);
   }
 `;
-
-interface ToastPortalT {
-  deletes: (TodoT | TodoT[])[];
-  clearDeletes: () => void;
-  popDeletes: () => TodoT | TodoT[];
-  setTodoList: Dispatch<SetStateAction<TodoT[]>>;
-}
-
-export default function ToastPortal({
-  deletes,
-  clearDeletes,
-  popDeletes,
-  setTodoList,
-}: ToastPortalT) {
-  const clickRef = useRef(false);
-
-  /**
-   * undo 버튼을 눌러 닫기 애니메이션이 진행 중일 때
-   * 또 다시 버튼을 눌렀을 때에는 작동이 되지 않도록 clickRef를 통해 설정.
-   */
-  const redoButtonHandler = () => {
-    if (clickRef.current) return;
-
-    clickRef.current = true;
-    const popItems = popDeletes();
-
-    Array.isArray(popItems) && popItems
-      ? setTodoList(prev => [...prev, ...popItems])
-      : setTodoList(prev => [...prev, popItems]);
-  };
-
-  const getKey = (item: TodoT | TodoT[]) => {
-    return Array.isArray(item) ? item[0].id : item.id;
-  };
-
-  return createPortal(
-    <>
-      <AnimatePresence
-        onExitComplete={() => {
-          clickRef.current = false;
-        }}>
-        {deletes.map(deleteItem => (
-          <Toast
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, type: 'spring' }}
-            exit={{ opacity: 0, x: 20 }}
-            key={getKey(deleteItem)}>
-            <p>To-do deleted</p>
-            <div>
-              <UndoButton onClick={redoButtonHandler}>↻</UndoButton>
-              <ClearButton onClick={clearDeletes}>⨉</ClearButton>
-            </div>
-          </Toast>
-        ))}
-      </AnimatePresence>
-    </>,
-    document.querySelector('#toast') as HTMLElement
-  );
-}

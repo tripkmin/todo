@@ -4,18 +4,6 @@ import styled from 'styled-components';
 import { ThemeT } from 'types/types';
 import { Dispatch, SetStateAction } from 'react';
 
-const HeaderBox = styled.header`
-  display: flex;
-  justify-content: space-between;
-
-  h1 {
-    font-size: 2.5rem;
-    letter-spacing: 0.8rem;
-    font-weight: 900;
-    color: white;
-  }
-`;
-
 interface HeaderProps {
   theme: ThemeT;
   setTheme: Dispatch<SetStateAction<ThemeT>>;
@@ -43,3 +31,15 @@ export default function Header({ theme, setTheme }: HeaderProps) {
     </HeaderBox>
   );
 }
+
+const HeaderBox = styled.header`
+  display: flex;
+  justify-content: space-between;
+
+  h1 {
+    font-size: 2.5rem;
+    letter-spacing: 0.8rem;
+    font-weight: 900;
+    color: white;
+  }
+`;

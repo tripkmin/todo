@@ -10,6 +10,24 @@ import Todo from 'components/Todo';
 import useTheme from 'hooks/useTheme';
 import { ThemeT } from 'types/types';
 
+export default function App() {
+  const { theme, setTheme } = useTheme();
+
+  return (
+    <ThemeProvider theme={themeMode[theme]}>
+      <GlobalStyles />
+      <Background $theme={theme} />
+      <TodoLayout>
+        <Header theme={theme} setTheme={setTheme} />
+        <Main>
+          <Todo />
+        </Main>
+        <Footer />
+      </TodoLayout>
+    </ThemeProvider>
+  );
+}
+
 const Background = styled.div<{ $theme: ThemeT }>`
   background-image: url(${lightBg});
   width: 100%;
@@ -20,6 +38,8 @@ const Background = styled.div<{ $theme: ThemeT }>`
   left: 0;
   z-index: -1;
 
+  // background-image의 transition 효과를 위해
+  // 똑같은 크기의 darkBg div 박스를 가상으로 만들어 opacity를 조절해 구현함.
   &::after {
     content: '';
     background-image: url(${darkBg});
@@ -47,21 +67,3 @@ const TodoLayout = styled.section`
     margin: 5rem 2rem;
   }
 `;
-
-export default function App() {
-  const { theme, setTheme } = useTheme();
-
-  return (
-    <ThemeProvider theme={themeMode[theme]}>
-      <GlobalStyles />
-      <Background $theme={theme} />
-      <TodoLayout>
-        <Header theme={theme} setTheme={setTheme} />
-        <Main>
-          <Todo />
-        </Main>
-        <Footer />
-      </TodoLayout>
-    </ThemeProvider>
-  );
-}

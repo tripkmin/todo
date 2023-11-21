@@ -95,7 +95,6 @@ const GlobalStyles = createGlobalStyle`
     #toast {
       position: fixed;
       width:100%;
-      /* padding:0 2rem; */
       bottom: 0;
       left: 0;
       z-index: 1;
@@ -103,7 +102,6 @@ const GlobalStyles = createGlobalStyle`
 
     textarea {
       scrollbar-color: ${props => props.theme.background.secondary};
-      overflow-y: scroll;
 
         &::-webkit-scrollbar {
           width: 8px;
