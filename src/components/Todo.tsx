@@ -64,8 +64,6 @@ const TodoItemContent = styled.p<{ $completed: boolean }>`
 const RoundedSubmitButton = styled(RoundedButton)<{ disabled: boolean }>`
   &:after {
     content: '→';
-    color: white;
-    background: linear-gradient(155deg, #edcb6c 0%, #ec79bc 100%);
     opacity: ${props => (props.disabled ? 0 : 1)};
   }
 
@@ -79,16 +77,12 @@ const RoundedSubmitButton = styled(RoundedButton)<{ disabled: boolean }>`
 const RoundedCancelButton = styled(RoundedButton)`
   &:after {
     content: '⨉';
-    color: white;
-    background: linear-gradient(155deg, #edcb6c 0%, #ec79bc 100%);
   }
 `;
 
 const RoundedCheckButton = styled(RoundedButton)`
   &:after {
     content: '✓';
-    color: white;
-    background: linear-gradient(155deg, #edcb6c 0%, #ec79bc 100%);
   }
 `;
 
@@ -371,9 +365,12 @@ export default function Todo() {
   };
 
   const handleResizeHeight = (ref: RefObject<HTMLTextAreaElement>) => {
-    if (ref.current) {
+    const INNER_HEIGHT = 24;
+
+    if (ref.current && ref.current.scrollHeight <= INNER_HEIGHT * 4) {
       ref.current.style.height = 'auto'; //height 초기화
-      ref.current.style.height = ref.current.scrollHeight + 'px';
+      ref.current.style.height =
+        Math.min(ref.current.scrollHeight, INNER_HEIGHT * 4) + 'px';
     }
   };
 

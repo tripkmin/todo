@@ -26,6 +26,8 @@ export const RoundedButton = styled.button`
     border-radius: 5px;
     transition: opacity ${timer.default};
     opacity: 0;
+    color: white;
+    background: linear-gradient(155deg, #ed6c6c 0%, #b864ee 100%);
   }
 
   &:disabled {

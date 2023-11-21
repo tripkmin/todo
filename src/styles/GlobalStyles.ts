@@ -100,6 +100,25 @@ const GlobalStyles = createGlobalStyle`
       left: 0;
       z-index: 1;
     }
+
+    textarea {
+      scrollbar-color: ${props => props.theme.background.secondary};
+      overflow-y: scroll;
+
+        &::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        &::-webkit-scrollbar-track {
+          background: ${props => props.theme.background.secondary};
+          border-radius: 10px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+          background: ${props => props.theme.font.primary};
+          border-radius: 10px;
+        }
+    }
 `;
 
 export default GlobalStyles;
