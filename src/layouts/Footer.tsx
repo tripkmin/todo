@@ -12,7 +12,7 @@ export default function Footer() {
           href="https://www.frontendmentor.io/challenges/todo-app-Su1_KokOW"
           target="_blank"
         >
-          <IconButton $icon="./frontendMentor.svg">
+          <IconButton $icon="./frontendmentor.svg">
             <img src={frontendMentorIcon}></img>
           </IconButton>
         </a>
