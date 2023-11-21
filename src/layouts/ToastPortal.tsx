@@ -8,7 +8,8 @@ import { TodoT } from 'types/types';
 
 const Toast = styled(motion.div)`
   background-color: ${props => props.theme.background.secondary};
-  transition: background-color ${timer.default}, color ${timer.default};
+  transition: background-color ${timer.default}, color ${timer.default},
+    border ${timer.default};
   color: ${props => props.theme.font.primary};
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
@@ -55,9 +56,9 @@ const ClearButton = styled(RoundedButton)`
 `;
 
 interface ToastPortalT {
-  deletes: TodoT[];
+  deletes: (TodoT | TodoT[])[];
   clearDeletes: () => void;
-  popDeletes: () => TodoT;
+  popDeletes: () => TodoT | TodoT[];
   setTodoList: Dispatch<SetStateAction<TodoT[]>>;
 }
 
@@ -78,7 +79,14 @@ export default function ToastPortal({
 
     clickRef.current = true;
     const popItems = popDeletes();
-    popItems && setTodoList(prev => [...prev, popItems]);
+
+    Array.isArray(popItems) && popItems
+      ? setTodoList(prev => [...prev, ...popItems])
+      : setTodoList(prev => [...prev, popItems]);
+  };
+
+  const getKey = (item: TodoT | TodoT[]) => {
+    return Array.isArray(item) ? item[0].id : item.id;
   };
 
   return createPortal(
@@ -93,7 +101,7 @@ export default function ToastPortal({
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.3, type: 'spring' }}
             exit={{ opacity: 0, x: 20 }}
-            key={deleteItem.id}>
+            key={getKey(deleteItem)}>
             <p>To-do deleted</p>
             <div>
               <UndoButton onClick={redoButtonHandler}>↻</UndoButton>

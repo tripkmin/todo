@@ -549,6 +549,8 @@ export default function Todo() {
           </TodoOption>
           <ClearButton
             onClick={() => {
+              pushDeletes(todoList.filter(todoItem => todoItem.completed));
+
               setTodoList(prev => {
                 const filtered = prev.filter(todoItem => !todoItem.completed);
                 return filtered;
