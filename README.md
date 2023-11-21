@@ -1,46 +1,90 @@
-# Getting Started with Create React App
+# <img src="https://cdn.iconscout.com/icon/free/png-512/free-react-1-282599.png?f=avif&w=512" width="30"/> Todo Web App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## English
 
-## Available Scripts
+### 🔗 Links
 
-In the project directory, you can run:
+- Github URL: [Click here](https://github.com/tripkmin/todo)
+- Live Site URL: [Click here](https://todo-tripkmin.vercel.app/)
 
-### `npm start`
+### 🛠️ Technologies Used
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+- `React JS`
+- `TypeScript`
+- `Styled-Components`
+- `HTML5`, `CSS`
+- `Framer Motion`
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+### 🗒️ Core Features
 
-### `npm test`
+- Adding new to-do items
+- Toggling completion status of existing to-dos
+- Filtering to-dos
+- Theme switching
+- Drag and drop functionality
+- Responsive web design
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### ⚡ Additional Features
 
-### `npm run build`
+- When deleting a to-do, a toast is displayed with an "undo" option
+  - If multiple items are deleted simultaneously with "Clear Complete," undoing will restore multiple items simultaneously
+  - Undo is possible for previously deleted items while the toast timer is active
+- Variable textarea style
+  - Expands dynamically up to 4 lines, then becomes fixed at 4 lines and includes a custom scrollbar
+- Keyboard considerations
+  - Pressing Esc while editing a to-do exits the editing mode
+  - Pressing Enter when adding a to-do immediately submits it
+  - Pressing Shift + Enter when adding a to-do creates a line break
+  - All elements can be accessed via the tab key
+- Smooth theme switching
+  - Transition of the background with a gradient does not work, so opacity transition of pseudo-elements is used to resolve it
+  - The header image is handled in the same way
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### ‼️ To-Do Features to Improve
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+- Issue with touch drag-and-drop not working on mobile devices.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## 한국어
 
-### `npm run eject`
+### 🔗 링크
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+- Github URL: [여기를 클릭해주세요](https://github.com/tripkmin/todo)
+- Live Site URL: [여기를 클릭해주세요](https://todo-tripkmin.vercel.app/)
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### 🛠️ 사용한 기술
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+- `React JS`
+- `TypeScript`
+- `Styled-Components`
+- `HTML5`, `CSS`
+- `Framer Motion`
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+### 🗒️ 기본 기능
 
-## Learn More
+- 새로운 할 일 추가 기능
+- 기존 할 일의 완료/미완료 토글 기능
+- 할 일 필터링 기능
+- 테마 전환 기능
+- 드래그 앤 드롭 기능
+- 반응형 웹
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### ⚡ 추가 기능
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+- 할 일 삭제시, 하단에 undo 기능을 실행할 수 있는 toast 출력
+  - Clear Complete로 다수 항목을 동시에 삭제한 경우 undo시 다수 항목이 동시에 복원됨
+  - Toast 타이머가 작동되는 동안에는 그 전에 삭제했던 요소들도 undo 가능
+- 가변 textarea style 기능
+  - 4행까지는 가변적으로 늘어나고, 그 이상부터는 4행으로 고정됨.
+  - Textarea 전용 scrollbar
+- 키보드 고려
+  - 할 일을 수정하다가 Esc를 누를 경우 수정이 종료됨
+  - 할 일을 추가할 때 Enter를 누르면 바로 submit이 되도록 함
+  - 할 일을 추가할 때 Shift + Enter를 누를 시 줄바꿈이 되도록 함.
+  - 모든 요소를 탭으로 접근할 수 있도록 함.
+- 부드러운 테마 전환 기능
+  - gradient를 가진 background의 transition이 작동하지 않아 가상 요소의 opacity transition으로 해결
+  - Header의 이미지 역시 동일한 방법으로 해결
+
+### ‼️ 보완해야 할 기능
+
+- 모바일 디바이스에서 터치 드래그 앤 드롭이 동작하지 않는 문제.
