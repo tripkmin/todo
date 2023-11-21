@@ -79,7 +79,7 @@ export default function ToastPortal({
 }
 
 const Toast = styled(motion.div)`
-  background-color: ${props => props.theme.background.secondary};
+  background-color: ${props => props.theme.background.toast};
   transition: background-color ${timer.default}, color ${timer.default},
     border ${timer.default};
   color: ${props => props.theme.font.primary};

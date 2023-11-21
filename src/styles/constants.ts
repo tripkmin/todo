@@ -7,7 +7,7 @@ export const themeMode: ThemeModeT = {
       secondary: '#ffffff',
       light: '#dddddd',
       dragged: '#cccccc',
-      toast: '#c2deff',
+      toast: '#efefef',
     },
     font: {
       header: '#ffffff',
@@ -28,7 +28,7 @@ export const themeMode: ThemeModeT = {
       secondary: '#25273c',
       light: '#545888',
       dragged: '#8389d4',
-      toast: '#4727a3',
+      toast: '#25273c',
     },
     font: {
       header: '#ffffff',

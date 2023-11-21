@@ -10,7 +10,7 @@ export default function useDelete() {
     if (deletes.length) {
       const timeout = setTimeout(() => {
         clearDeletes();
-      }, 30000);
+      }, 8000);
 
       return () => {
         clearTimeout(timeout);

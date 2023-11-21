@@ -312,6 +312,7 @@ export default function Todo() {
               <OptionButton
                 key={option.value}
                 onClick={() => {
+                  editInitialize();
                   setFilter(option.value);
                 }}
                 value={option.value}
@@ -322,8 +323,9 @@ export default function Todo() {
           </TodoOption>
           <ClearButton
             onClick={() => {
-              pushDeletes(todoList.filter(todoItem => todoItem.completed));
-
+              const completedItems = todoList.filter(todoItem => todoItem.completed);
+              if (!completedItems.length) return;
+              pushDeletes(completedItems);
               setTodoList(prev => {
                 const filtered = prev.filter(todoItem => !todoItem.completed);
                 return filtered;
@@ -338,6 +340,7 @@ export default function Todo() {
           <OptionButton
             key={option.value}
             onClick={() => {
+              editInitialize();
               setFilter(option.value);
             }}
             value={option.value}
