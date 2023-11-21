@@ -9,11 +9,339 @@ import {
   useState,
 } from 'react';
 import styled from 'styled-components';
-import deleteIcon from 'assets/images/icon-cross.svg';
 import { size, timer } from 'styles/constants';
 import uuid from 'react-uuid';
-import { EditT } from 'types/types';
+import { EditT, TodoT } from 'types/types';
 import useDidMountEffect from 'hooks/useDidMountEffect';
+import useDelete from 'hooks/useDelete';
+import ToastPortal from 'layouts/ToastPortal';
+import { RoundedButton } from 'styles/common';
+
+export default function Todo() {
+  const [todoList, setTodoList] = useState<TodoT[]>([]);
+  const [newTodoValue, setNewTodoValue] = useState('');
+  const [edit, setEdit] = useState<EditT>({ id: null, status: false, inputValue: '' });
+  const [draggedId, setDraggedId] = useState('');
+  const [dragoverId, setDragoverId] = useState('');
+  const [filter, setFilter] = useState('all');
+  const { deletes, clearDeletes, pushDeletes, popDeletes } = useDelete();
+
+  const newTodoRef = useRef<HTMLTextAreaElement>(null);
+  const dragItem = useRef('');
+  const dragoverItem = useRef('');
+  const EditTextareaRef = useRef(null);
+
+  const FILTER_OPTION = [
+    { value: 'all', revealName: 'All' },
+    { value: 'active', revealName: 'Active' },
+    { value: 'completed', revealName: 'Completed' },
+  ];
+
+  // 기존 Local storage에 저장된 todo_list가 있으면 불러와서 상태로 저장
+  // 없을 경우 기본 더미 데이터(data.json)를 불러와 상태로 저장
+  useEffect(() => {
+    const localTodoData = localStorage.getItem('todo_list');
+    const todoFetch = async () => {
+      if (!localTodoData) {
+        const res = await fetch('./data.json');
+        const data = await res.json();
+        localStorage.setItem('todo_list', JSON.stringify(data));
+        setTodoList(data);
+      } else {
+        setTodoList(JSON.parse(localTodoData));
+      }
+    };
+
+    todoFetch();
+  }, []);
+
+  // TodoList state가 첫 마운트 이후 갱신될 때마다 local storage에 같이 갱신시킴
+  useDidMountEffect(() => {
+    localStorage.setItem('todo_list', JSON.stringify(todoList));
+  }, [todoList]);
+
+  const newTodoSubmitHandler = (e: FormEvent) => {
+    e.preventDefault();
+    setTodoList(prev => [
+      ...prev,
+      { id: uuid(), content: newTodoValue.trim(), completed: false },
+    ]);
+    setNewTodoValue('');
+    if (newTodoRef.current) {
+      newTodoRef.current.focus();
+    }
+  };
+
+  const newTodoOnChangeHandler = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    setNewTodoValue(e.target.value);
+  };
+
+  const classNameHandler = (todoItem: TodoT) => {
+    if (todoItem.id === draggedId && todoItem.id === dragoverId) {
+      return 'dragged dragover';
+    } else if (todoItem.id === draggedId) {
+      return 'dragged';
+    } else if (todoItem.id === dragoverId) {
+      return 'dragover';
+    } else {
+      return '';
+    }
+  };
+
+  // Todo item을 edit하고 있는 도중 드래그 하거나 Esc를 눌렀을 때 edit이 취소되도록 함.
+  const editInitialize = () => {
+    setEdit({ id: null, status: false, inputValue: '' });
+  };
+
+  // EditInput에다가 onKeyDown 붙여도 되지만, 이럴 경우 포커스가 맞춰지지 않았을 때
+  // ESC를 눌러도 반응이 없으므로 document 전역에 이벤트 리스터를 붙였음.
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Esc' || e.keyCode === 27) {
+        editInitialize();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  const filteredTodoList = () => {
+    switch (filter) {
+      case 'completed':
+        return todoList.filter(todoItem => todoItem.completed);
+      case 'active':
+        return todoList.filter(todoItem => !todoItem.completed);
+      default:
+        return todoList;
+    }
+  };
+
+  const onDragStartHandler = (todoItem: TodoT) => {
+    editInitialize();
+    dragItem.current = todoItem.id;
+    setDraggedId(todoItem.id);
+  };
+
+  const onDragEnterHandler = (todoItem: TodoT) => {
+    dragoverItem.current = todoItem.id;
+    setDragoverId(todoItem.id);
+  };
+
+  const onDragEndHandler = () => {
+    const newTodo = [...todoList];
+    const draggedItem = newTodo.find(todoItem => todoItem.id === dragItem.current);
+    const draggedItemIndex = newTodo.findIndex(todo => todo.id === dragItem.current);
+    const dropItemIndex = newTodo.findIndex(todo => todo.id === dragoverItem.current);
+    if (draggedItem) {
+      newTodo.splice(draggedItemIndex, 1); // draggedItem을 제거함
+      newTodo.splice(dropItemIndex, 0, draggedItem);
+      [dragoverItem.current, dragItem.current] = ['', '']; // reset
+      setTodoList(newTodo);
+    }
+    setDraggedId('');
+    setDragoverId('');
+  };
+
+  const editOnSubmitHandler = () => {
+    const newTodo = todoList.map(todoItem => {
+      if (todoItem.id === edit.id) {
+        return { ...todoItem, content: edit.inputValue };
+      } else {
+        return { ...todoItem };
+      }
+    });
+    setTodoList(newTodo);
+    setEdit({ id: '', status: false, inputValue: '' });
+  };
+
+  const onCheckHandler = (todoItem: TodoT) => {
+    setTodoList(prev => {
+      return prev.map(_t => {
+        if (_t.id === todoItem.id) {
+          return { ..._t, completed: !_t.completed };
+        } else {
+          return { ..._t };
+        }
+      });
+    });
+  };
+
+  // Textarea의 스크롤 사이즈를 동적으로 조절함
+  const handleResizeHeight = (ref: RefObject<HTMLTextAreaElement>) => {
+    const INNER_HEIGHT = 24;
+
+    if (ref.current && ref.current.scrollHeight <= INNER_HEIGHT * 4) {
+      ref.current.style.height = 'auto'; //height 초기화
+      ref.current.style.height =
+        Math.min(ref.current.scrollHeight, INNER_HEIGHT * 4) + 'px';
+      // Scroll height가 4줄 이상 넘어간다면 그 이상 넘어가지 못하게 함.
+    }
+  };
+
+  useEffect(() => {
+    handleResizeHeight(newTodoRef);
+  }, [newTodoValue]);
+
+  useEffect(() => {
+    handleResizeHeight(EditTextareaRef);
+  }, [edit.inputValue]);
+
+  return (
+    <>
+      <ToastPortal
+        deletes={deletes}
+        clearDeletes={clearDeletes}
+        popDeletes={popDeletes}
+        setTodoList={setTodoList}></ToastPortal>
+      <Form onSubmit={newTodoSubmitHandler}>
+        <Textarea
+          rows={1}
+          ref={newTodoRef}
+          placeholder="Create a new todo"
+          value={newTodoValue}
+          onChange={newTodoOnChangeHandler}
+          onKeyDown={e => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              if (newTodoValue.trim() === '') return;
+              newTodoSubmitHandler(e);
+            }
+          }}></Textarea>
+        <RoundedSubmitButton disabled={newTodoValue.trim() === ''}>→</RoundedSubmitButton>
+      </Form>
+      <TodoBody>
+        {todoList.length === 0 ? (
+          <TodoNothing>
+            <p>No to-dos here! Time for a break, maybe?</p>
+          </TodoNothing>
+        ) : (
+          filteredTodoList().map(todoItem => (
+            <TodoItem
+              draggable
+              key={todoItem.id}
+              className={classNameHandler(todoItem)}
+              onDragStart={() => {
+                onDragStartHandler(todoItem);
+              }}
+              onDragEnter={() => {
+                onDragEnterHandler(todoItem);
+              }}
+              onDragOver={(e: DragEvent) => {
+                e.preventDefault();
+              }}
+              onDragEnd={() => {
+                onDragEndHandler();
+              }}>
+              {edit.id === todoItem.id ? (
+                <>
+                  <Textarea
+                    ref={EditTextareaRef}
+                    rows={1}
+                    defaultValue={edit.inputValue}
+                    onChange={e =>
+                      setEdit(prev => ({
+                        ...prev,
+                        inputValue: e.target.value,
+                      }))
+                    }
+                  />
+                  <RoundedCancelButton
+                    onClick={(e: MouseEvent) => {
+                      e.stopPropagation();
+                      setEdit({ id: '', status: false, inputValue: '' });
+                    }}>
+                    ⨉
+                  </RoundedCancelButton>
+                  <RoundedCheckButton
+                    disabled={edit.inputValue.trim() === ''}
+                    onClick={(e: MouseEvent) => {
+                      e.stopPropagation();
+                      editOnSubmitHandler();
+                    }}>
+                    ✓
+                  </RoundedCheckButton>
+                </>
+              ) : (
+                <>
+                  <CheckButton
+                    $completed={todoItem.completed}
+                    onClick={() => {
+                      onCheckHandler(todoItem);
+                    }}
+                  />
+                  <TodoItemContent
+                    $completed={todoItem.completed}
+                    onClick={() => {
+                      setEdit(prev => ({
+                        inputValue: todoItem.content,
+                        id: todoItem.id,
+                        status: !prev.status,
+                      }));
+                    }}>
+                    {todoItem.content}
+                  </TodoItemContent>
+                  <RoundedDeleteButton
+                    onClick={() => {
+                      pushDeletes(todoItem);
+                      setTodoList(prev => {
+                        return prev.filter(_t => _t.id !== todoItem.id);
+                      });
+                    }}>
+                    ⨉
+                  </RoundedDeleteButton>
+                </>
+              )}
+            </TodoItem>
+          ))
+        )}
+        <TodoStatus $currentFilter={filter}>
+          <p>{todoList.filter(todoItem => !todoItem.completed).length} items left</p>
+          <TodoOption>
+            {FILTER_OPTION.map(option => (
+              <OptionButton
+                key={option.value}
+                onClick={() => {
+                  setFilter(option.value);
+                }}
+                value={option.value}
+                $filter={filter}>
+                {option.revealName}
+              </OptionButton>
+            ))}
+          </TodoOption>
+          <ClearButton
+            onClick={() => {
+              pushDeletes(todoList.filter(todoItem => todoItem.completed));
+
+              setTodoList(prev => {
+                const filtered = prev.filter(todoItem => !todoItem.completed);
+                return filtered;
+              });
+            }}>
+            Clear Completed
+          </ClearButton>
+        </TodoStatus>
+      </TodoBody>
+      <TodoFooter>
+        {FILTER_OPTION.map(option => (
+          <OptionButton
+            key={option.value}
+            onClick={() => {
+              setFilter(option.value);
+            }}
+            value={option.value}
+            $filter={filter}>
+            {option.revealName}
+          </OptionButton>
+        ))}
+      </TodoFooter>
+    </>
+  );
+}
 
 const Form = styled.form`
   display: flex;
@@ -24,6 +352,7 @@ const Form = styled.form`
   border-radius: 0.5rem;
   transition: background-color ${timer.default};
 `;
+
 const CheckButton = styled.button<{ $completed: boolean }>`
   padding: 10px;
   border-radius: 50%;
@@ -58,12 +387,33 @@ const TodoItemContent = styled.p<{ $completed: boolean }>`
   transition: color ${timer.default};
 `;
 
-const DeleteButton = styled.button`
-  display: flex;
-  justify-content: center;
-  align-items: center;
+const RoundedSubmitButton = styled(RoundedButton)<{ disabled: boolean }>`
+  &:after {
+    content: '→';
+    opacity: ${props => (props.disabled ? 0 : 1)};
+  }
+
+  &:hover {
+    &:after {
+      opacity: ${props => (props.disabled ? 0 : 1)};
+    }
+  }
+`;
+
+const RoundedCancelButton = styled(RoundedButton)`
+  &:after {
+    content: '⨉';
+  }
+`;
+
+const RoundedCheckButton = styled(RoundedButton)`
+  &:after {
+    content: '✓';
+  }
+`;
+
+const RoundedDeleteButton = styled(RoundedCancelButton)`
   opacity: 0;
-  transition: opacity ${timer.fast};
 
   &:focus {
     opacity: 1;
@@ -71,62 +421,6 @@ const DeleteButton = styled.button`
 
   @media screen and (max-width: ${size.mobile}) {
     opacity: 1;
-  }
-`;
-
-const RoundedButton = styled.button<{ disabled?: boolean }>`
-  width: 28px;
-  height: 28px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: ${props => props.theme.font.primary};
-  border-radius: 5px;
-  background: ${props => props.theme.background.light};
-  position: relative;
-  transition: all ${timer.default};
-
-  &:after {
-    position: absolute;
-    top: 0px;
-    bottom: 0px;
-    left: 0px;
-    right: 0px;
-    content: '';
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-radius: 5px;
-    opacity: ${props => (props.disabled ? 0 : 1)};
-    transition: opacity ${timer.fast};
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-  }
-`;
-
-const RoundedSubmitButton = styled(RoundedButton)`
-  &:after {
-    content: '→';
-    color: white;
-    background: linear-gradient(155deg, #edcb6c 0%, #ec79bc 100%);
-  }
-`;
-
-const RoundedCancelButton = styled(RoundedButton)`
-  &:after {
-    content: '⨉';
-    color: white;
-    background: linear-gradient(155deg, #edcb6c 0%, #ec79bc 100%);
-  }
-`;
-
-const RoundedCheckButton = styled(RoundedButton)`
-  &:after {
-    content: '✓';
-    color: white;
-    background: linear-gradient(155deg, #edcb6c 0%, #ec79bc 100%);
   }
 `;
 
@@ -158,10 +452,10 @@ const TodoItem = styled.div`
   padding: 0.9rem 1.4rem;
   border-bottom: 1px solid ${props => props.theme.border.secondary};
   gap: 1rem;
-  transition: border-bottom ${timer.default};
+  transition: all ${timer.default};
 
   &.dragged {
-    background-color: ${props => props.theme.background.light};
+    background-color: ${props => props.theme.background.dragged};
   }
 
   &.dragover {
@@ -211,7 +505,7 @@ const TodoItem = styled.div`
   }
 
   &:hover {
-    ${DeleteButton} {
+    ${RoundedDeleteButton} {
       opacity: 1;
     }
   }
@@ -288,304 +582,3 @@ const TodoFooter = styled.div`
     transition: background-color ${timer.default};
   }
 `;
-
-export default function Todo() {
-  const [textareaValue, setTextareaValue] = useState('');
-  const TextareaRef = useRef<HTMLTextAreaElement>(null);
-
-  const [todoList, setTodoList] = useState<TodoT[]>([]);
-
-  const dragItem = useRef('');
-  const dragoverItem = useRef('');
-  const [draggedId, setDraggedId] = useState('');
-  const [dragoverId, setDragoverId] = useState('');
-  const [edit, setEdit] = useState<EditT>({ id: null, status: false, inputValue: '' });
-
-  const submitHandler = (e: FormEvent) => {
-    e.preventDefault();
-    setTodoList(prev => [
-      ...prev,
-      { id: uuid(), content: textareaValue, completed: false },
-    ]);
-    setTextareaValue('');
-    if (TextareaRef.current) {
-      TextareaRef.current.focus();
-    }
-  };
-
-  const onChangeHandler = (e: ChangeEvent<HTMLTextAreaElement>) => {
-    setTextareaValue(e.target.value);
-  };
-
-  const classNameHandler = (todoItem: TodoT) => {
-    if (todoItem.id === draggedId && todoItem.id === dragoverId) {
-      return 'dragged dragover';
-    } else if (todoItem.id === draggedId) {
-      return 'dragged';
-    } else if (todoItem.id === dragoverId) {
-      return 'dragover';
-    } else {
-      return '';
-    }
-  };
-
-  const [filter, setFilter] = useState('all');
-  const FILTEROPTION = [
-    { value: 'all', revealName: 'All' },
-    { value: 'active', revealName: 'Active' },
-    { value: 'completed', revealName: 'Completed' },
-  ];
-
-  const filteredTodoList = () => {
-    switch (filter) {
-      case 'completed':
-        return todoList.filter(todoItem => todoItem.completed);
-      case 'active':
-        return todoList.filter(todoItem => !todoItem.completed);
-      default:
-        return todoList;
-    }
-  };
-
-  interface TodoT {
-    id: string;
-    content: string;
-    completed: boolean;
-  }
-
-  const onDragStartHandler = (todoItem: TodoT) => {
-    setEdit({ id: null, status: false, inputValue: '' }); // 만약 editing하고 있었다면 editing을 종료시킴
-    dragItem.current = todoItem.id;
-    setDraggedId(todoItem.id);
-  };
-
-  const onDragEnterHandler = (todoItem: TodoT) => {
-    dragoverItem.current = todoItem.id;
-    setDragoverId(todoItem.id);
-  };
-
-  const onDragEndHandler = () => {
-    const newTodo = [...todoList];
-    const draggedItem = newTodo.find(todoItem => todoItem.id === dragItem.current);
-    const draggedItemIndex = newTodo.findIndex(todo => todo.id === dragItem.current);
-    const dropItemIndex = newTodo.findIndex(todo => todo.id === dragoverItem.current);
-    if (draggedItem) {
-      newTodo.splice(draggedItemIndex, 1); // draggedItem을 제거함
-      newTodo.splice(dropItemIndex, 0, draggedItem);
-      [dragoverItem.current, dragItem.current] = ['', '']; // reset
-      setTodoList(newTodo);
-    }
-    setDraggedId('');
-    setDragoverId('');
-  };
-
-  const onEditSubmitHandler = () => {
-    const newTodo = todoList.map(todoItem => {
-      if (todoItem.id === edit.id) {
-        return { ...todoItem, content: edit.inputValue };
-      } else {
-        return { ...todoItem };
-      }
-    });
-    setTodoList(newTodo);
-    setEdit({ id: '', status: false, inputValue: '' });
-  };
-
-  const onCheckHandler = (todoItem: TodoT) => {
-    setTodoList(prev => {
-      return prev.map(_t => {
-        if (_t.id === todoItem.id) {
-          return { ..._t, completed: !_t.completed };
-        } else {
-          return { ..._t };
-        }
-      });
-    });
-  };
-
-  const handleResizeHeight = (ref: RefObject<HTMLTextAreaElement>) => {
-    if (ref.current) {
-      ref.current.style.height = 'auto'; //height 초기화
-      ref.current.style.height = ref.current.scrollHeight + 'px';
-    }
-  };
-
-  const EditTextareaRef = useRef(null);
-
-  useEffect(() => {
-    handleResizeHeight(TextareaRef);
-  }, [textareaValue]);
-
-  useEffect(() => {
-    handleResizeHeight(EditTextareaRef);
-  }, [edit.inputValue]);
-
-  useEffect(() => {
-    const localTodoData = localStorage.getItem('todo_list');
-    const todoFetch = async () => {
-      if (!localTodoData) {
-        // initialize by data.json
-        const res = await fetch('./data.json');
-        const data = await res.json();
-        localStorage.setItem('todo_list', JSON.stringify(data));
-        setTodoList(data);
-      } else {
-        setTodoList(JSON.parse(localTodoData));
-      }
-    };
-
-    todoFetch();
-  }, []);
-
-  useDidMountEffect(() => {
-    localStorage.setItem('todo_list', JSON.stringify(todoList));
-  }, [todoList]);
-
-  return (
-    <>
-      <Form onSubmit={submitHandler}>
-        <Textarea
-          rows={1}
-          ref={TextareaRef}
-          placeholder="Create a new todo"
-          value={textareaValue}
-          onChange={onChangeHandler}
-        ></Textarea>
-        <RoundedSubmitButton disabled={textareaValue.trim() === ''}>
-          →
-        </RoundedSubmitButton>
-      </Form>
-      <TodoBody>
-        {todoList.length === 0 ? (
-          <TodoNothing>
-            <p>No to-dos here! Time for a break, maybe?</p>
-          </TodoNothing>
-        ) : (
-          filteredTodoList().map(todoItem => (
-            <TodoItem
-              draggable
-              key={todoItem.id}
-              className={classNameHandler(todoItem)}
-              onDragStart={() => {
-                onDragStartHandler(todoItem);
-              }}
-              onDragEnter={() => {
-                onDragEnterHandler(todoItem);
-              }}
-              onDragOver={(e: DragEvent) => {
-                e.preventDefault();
-              }}
-              onDragEnd={() => {
-                onDragEndHandler();
-              }}
-            >
-              {edit.id === todoItem.id ? (
-                <>
-                  <Textarea
-                    ref={EditTextareaRef}
-                    rows={1}
-                    defaultValue={edit.inputValue}
-                    onChange={e =>
-                      setEdit(prev => ({
-                        ...prev,
-                        inputValue: e.target.value,
-                      }))
-                    }
-                  />
-                  <RoundedCancelButton
-                    onClick={(e: MouseEvent) => {
-                      e.stopPropagation();
-                      setEdit({ id: '', status: false, inputValue: '' });
-                    }}
-                  >
-                    ⨉
-                  </RoundedCancelButton>
-                  <RoundedCheckButton
-                    disabled={edit.inputValue.trim() === ''}
-                    onClick={(e: MouseEvent) => {
-                      e.stopPropagation();
-                      onEditSubmitHandler();
-                    }}
-                  >
-                    ✓
-                  </RoundedCheckButton>
-                </>
-              ) : (
-                <>
-                  <CheckButton
-                    $completed={todoItem.completed}
-                    onClick={() => {
-                      onCheckHandler(todoItem);
-                    }}
-                  />
-                  <TodoItemContent
-                    $completed={todoItem.completed}
-                    onClick={() => {
-                      setEdit(prev => ({
-                        inputValue: todoItem.content,
-                        id: todoItem.id,
-                        status: !prev.status,
-                      }));
-                    }}
-                  >
-                    {todoItem.content}
-                  </TodoItemContent>
-                  <DeleteButton
-                    onClick={() => {
-                      setTodoList(prev => {
-                        return prev.filter(_t => _t.id !== todoItem.id);
-                      });
-                    }}
-                  >
-                    <img src={deleteIcon}></img>
-                  </DeleteButton>
-                </>
-              )}
-            </TodoItem>
-          ))
-        )}
-        <TodoStatus $currentFilter={filter}>
-          <p>{todoList.filter(todoItem => !todoItem.completed).length} items left</p>
-          <TodoOption>
-            {FILTEROPTION.map(option => (
-              <OptionButton
-                key={option.value}
-                onClick={() => {
-                  setFilter(option.value);
-                }}
-                value={option.value}
-                $filter={filter}
-              >
-                {option.revealName}
-              </OptionButton>
-            ))}
-          </TodoOption>
-          <ClearButton
-            onClick={() => {
-              setTodoList(prev => {
-                const filtered = prev.filter(todoItem => !todoItem.completed);
-                return filtered;
-              });
-            }}
-          >
-            Clear Completed
-          </ClearButton>
-        </TodoStatus>
-      </TodoBody>
-      <TodoFooter>
-        {FILTEROPTION.map(option => (
-          <OptionButton
-            key={option.value}
-            onClick={() => {
-              setFilter(option.value);
-            }}
-            value={option.value}
-            $filter={filter}
-          >
-            {option.revealName}
-          </OptionButton>
-        ))}
-      </TodoFooter>
-    </>
-  );
-}
