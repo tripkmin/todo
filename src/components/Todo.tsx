@@ -12,8 +12,11 @@ import styled from 'styled-components';
 import deleteIcon from 'assets/images/icon-cross.svg';
 import { size, timer } from 'styles/constants';
 import uuid from 'react-uuid';
-import { EditT } from 'types/types';
+import { EditT, TodoT } from 'types/types';
 import useDidMountEffect from 'hooks/useDidMountEffect';
+import useDelete from 'hooks/useDelete';
+import ToastPortal from 'layouts/ToastPortal';
+import { RoundedButton } from 'styles/common';
 
 const Form = styled.form`
   display: flex;
@@ -74,38 +77,6 @@ const DeleteButton = styled.button`
   }
 `;
 
-const RoundedButton = styled.button<{ disabled?: boolean }>`
-  width: 28px;
-  height: 28px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: ${props => props.theme.font.primary};
-  border-radius: 5px;
-  background: ${props => props.theme.background.light};
-  position: relative;
-  transition: all ${timer.default};
-
-  &:after {
-    position: absolute;
-    top: 0px;
-    bottom: 0px;
-    left: 0px;
-    right: 0px;
-    content: '';
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-radius: 5px;
-    opacity: ${props => (props.disabled ? 0 : 1)};
-    transition: opacity ${timer.fast};
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-  }
-`;
-
 const RoundedSubmitButton = styled(RoundedButton)`
   &:after {
     content: '→';
@@ -118,7 +89,7 @@ const RoundedCancelButton = styled(RoundedButton)`
   &:after {
     content: '⨉';
     color: white;
-    background: linear-gradient(155deg, #edcb6c 0%, #ec79bc 100%);
+    background: linear-gradient(155deg, #776a45 0%, #861758 100%);
   }
 `;
 
@@ -292,7 +263,6 @@ const TodoFooter = styled.div`
 export default function Todo() {
   const [textareaValue, setTextareaValue] = useState('');
   const TextareaRef = useRef<HTMLTextAreaElement>(null);
-
   const [todoList, setTodoList] = useState<TodoT[]>([]);
 
   const dragItem = useRef('');
@@ -346,12 +316,6 @@ export default function Todo() {
         return todoList;
     }
   };
-
-  interface TodoT {
-    id: string;
-    content: string;
-    completed: boolean;
-  }
 
   const onDragStartHandler = (todoItem: TodoT) => {
     setEdit({ id: null, status: false, inputValue: '' }); // 만약 editing하고 있었다면 editing을 종료시킴
@@ -441,8 +405,18 @@ export default function Todo() {
     localStorage.setItem('todo_list', JSON.stringify(todoList));
   }, [todoList]);
 
+  const { deletes, setDeletes, clearDeletes, pushDeletes, popDeletes, redoDeletes } =
+    useDelete();
+
   return (
     <>
+      <ToastPortal
+        deletes={deletes}
+        clearDeletes={clearDeletes}
+        popDeletes={popDeletes}
+        setTodoList={setTodoList}
+        redoDeletes={redoDeletes}
+      ></ToastPortal>
       <Form onSubmit={submitHandler}>
         <Textarea
           rows={1}
@@ -532,6 +506,7 @@ export default function Todo() {
                   </TodoItemContent>
                   <DeleteButton
                     onClick={() => {
+                      pushDeletes(todoItem);
                       setTodoList(prev => {
                         return prev.filter(_t => _t.id !== todoItem.id);
                       });

@@ -1,3 +1,4 @@
+export type TodoT = { id: string; completed: boolean; content: string };
 export type EditT = { id: null | string; status: boolean; inputValue: string };
 export type ThemeT = 'dark' | 'light';
 export type ThemeModeDetailT = {
